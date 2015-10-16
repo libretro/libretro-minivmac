@@ -57,8 +57,8 @@ void retro_set_input_poll(retro_input_poll_t cb)
    	input_poll_cb = cb;
 }
 
-void texture_init(){
-
+void texture_init(void)
+{
 	memset(bmp, 0, sizeof(bmp));
 }
 
