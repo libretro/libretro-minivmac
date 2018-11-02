@@ -109,8 +109,10 @@ CPPFLAGS += $(CFLAGS)
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
+	@echo "** BUILDING $(TARGET) FOR PLATFORM $(platform) **"
 	$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)  
-	
+	@echo "** BUILD SUCCESSFUL! GG NO RE **"
+
 %.o: %.c
 	$(CC) $(CFLAGS) $(HINCLUDES) -c -o $@ $<
 
