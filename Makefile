@@ -58,7 +58,7 @@ else ifeq ($(platform), osx)
    SHARED := -dynamiclib
 else
    CC = gcc
-   TARGET := retro-hatari.dll
+   TARGET := libretro-minivmac.dll
    SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 endif
 
