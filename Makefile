@@ -104,7 +104,7 @@ CFLAGS += -DMAC2=1 -std=gnu99  -O3 -finline-functions -funroll-loops  -fsigned-c
 
 CXXFLAGS  +=	$(CFLAGS) -std=gnu++0x
 CPPFLAGS += $(CFLAGS)
-
+LDFLAGS += -lm 
 
 all: $(TARGET)
 
