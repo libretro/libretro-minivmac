@@ -12,7 +12,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/times.h>
 
 
 #define CanGetAppPath 0
