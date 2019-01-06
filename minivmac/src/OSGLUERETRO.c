@@ -1751,15 +1751,19 @@ LOCALPROC UnallocMyMemory(void)
 	}
 }
 
-blnr InitOSGLU(void)
+blnr InitOSGLU(int argc, char **argv)
 {
+	my_argc = argc;
+	my_argv = argv;
+
 	InitDrives();
 	if (AllocMyMemory())
 
 #if dbglog_HAVE
 	if (dbglog_open())
 #endif
-	
+	if (ScanCommandLine())
+
 	if (LoadMacRom())
 
 

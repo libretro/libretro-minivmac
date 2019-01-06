@@ -13,6 +13,8 @@ extern char RPATH[512];
 extern char RETRO_DIR[512];
 extern char RETRO_ROM[512];
 
+#include "cmdline.c"
+
 extern void update_input(void);
 extern void texture_init(void);
 
@@ -68,7 +70,6 @@ void retro_init(void)
 	printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
 
 	texture_init();
-	InitOSGLU();
 }
 
 void retro_deinit(void)
@@ -101,7 +102,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    	struct retro_game_geometry geom = { TEX_WIDTH, TEX_HEIGHT, TEX_WIDTH, TEX_HEIGHT,4.0 / 3.0 };
-   	struct retro_system_timing timing = { 60.0, 22255.0 };
+   	struct retro_system_timing timing = { 60.0, 22255.0 }; /* = round(7833600 * 2 / 704) */
    
    	info->geometry = geom;
    	info->timing   = timing;
@@ -186,7 +187,8 @@ bool retro_load_game(const struct retro_game_info *info)
     	full_path = info->path;
 
     	strcpy(RPATH,full_path);
-	
+
+	pre_main(RPATH);
 
     	return true;
 }
