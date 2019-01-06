@@ -37,6 +37,9 @@
 
 #include "STRCONST.h"
 
+extern char RETRO_ROM[512];
+extern char RETRO_DIR[512];
+
 /* --- some simple utilities --- */
 
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
@@ -818,15 +821,21 @@ LOCALFUNC tMacErr LoadMacRomFromAppPar(void)
 LOCALFUNC blnr LoadMacRom(void)
 {
 	tMacErr err;
-
-	if ((NULL == rom_path)
-		|| (mnvm_fnfErr == (err = LoadMacRomFrom(rom_path))))
-	if (mnvm_fnfErr == (err = LoadMacRomFromHome()))
-#if CanGetAppPath
-	if (mnvm_fnfErr == (err = LoadMacRomFromAppPar()))
-#endif
-	if (mnvm_fnfErr == (err = LoadMacRomFrom(RomFileName)))
+	
+	sprintf(RETRO_ROM,"%s/MacIIx.ROM\0",RETRO_DIR);
+	if (mnvm_fnfErr == (err = LoadMacRomFrom(RETRO_ROM)))
 	{
+		sprintf(RETRO_ROM,"%s/MacII.ROM\0",RETRO_DIR);
+		if (mnvm_fnfErr == (err = LoadMacRomFrom(RETRO_ROM)))
+		if ((NULL == rom_path)
+			|| (mnvm_fnfErr == (err = LoadMacRomFrom(rom_path))))
+		if (mnvm_fnfErr == (err = LoadMacRomFromHome()))
+#if CanGetAppPath
+		if (mnvm_fnfErr == (err = LoadMacRomFromAppPar()))
+#endif
+		if (mnvm_fnfErr == (err = LoadMacRomFrom(RomFileName)))
+		{
+		}
 	}
 
 	if (mnvm_noErr != err) {

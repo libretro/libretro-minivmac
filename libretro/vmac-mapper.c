@@ -23,6 +23,8 @@ int SHIFTON=-1,MOUSEMODE=-1,NUMJOY=0,SHOWKEY=-1,PAS=2,STATUTON=-1;
 short signed int SNDBUF[1024*2];
 int snd_sampler = 22255 / 60;
 char RPATH[512];
+char RETRO_DIR[512];
+char RETRO_ROM[512];
 char DSKNAME[512];
 
 int gmx=320,gmy=240; //gui mouse

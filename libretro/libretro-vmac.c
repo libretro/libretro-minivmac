@@ -4,10 +4,14 @@
 
 #include "MACkeymap.h"
 
+const char *retro_system_directory;
+
 extern unsigned short int bmp[TEX_WIDTH * TEX_HEIGHT];
 extern int pauseg,SND ,snd_sampler;
 extern short signed int SNDBUF[1024*2];
 extern char RPATH[512];
+extern char RETRO_DIR[512];
+extern char RETRO_ROM[512];
 
 extern void update_input(void);
 extern void texture_init(void);
@@ -19,8 +23,50 @@ static retro_environment_t environ_cb;
 //static retro_input_poll_t input_poll_cb;
 //static retro_input_state_t input_state_cb;
 
+static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_t mod)
+{
+	unsigned char cpck=SDLKeyToMACScanCode[keycode];
+
+  	// printf( "Down: %s, Code: %d, Char: %u, Mod: %u. ,(%d)\n",
+  	//       down ? "yes" : "no", keycode, character, mod,cpck);
+
+	if (keycode>=320);
+	else{
+		
+		if(down && cpck!=0xff)		
+			retro_key_down(cpck);//IKBD_PressSTKey(cpck,1);	
+		else if(!down && cpck!=0xff)
+			retro_key_up(cpck);//IKBD_PressSTKey(cpck,0);
+
+	}
+
+}
+
 void retro_init(void)
 {
+    	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+    	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+    	{
+    		fprintf(stderr, "RGB565 is not supported.\n");
+    		return false;
+    	}
+
+    	struct retro_keyboard_callback cb = { keyboard_cb };
+    	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
+
+	const char *system_dir      = NULL;
+
+	// if defined, use the system directory			
+   	if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
+		retro_system_directory=system_dir; 
+
+   	if(retro_system_directory==NULL)
+      		sprintf(RETRO_DIR, "%s\0",".");
+   	else
+      		sprintf(RETRO_DIR, "%s\0", retro_system_directory);
+
+	printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
+
 	texture_init();
 	InitOSGLU();
 }
@@ -121,29 +167,10 @@ void retro_run(void)
 
 }
 
-static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_t mod)
-{
-	unsigned char cpck=SDLKeyToMACScanCode[keycode];
-
-  	// printf( "Down: %s, Code: %d, Char: %u, Mod: %u. ,(%d)\n",
-  	//       down ? "yes" : "no", keycode, character, mod,cpck);
-
-	if (keycode>=320);
-	else{
-		
-		if(down && cpck!=0xff)		
-			retro_key_down(cpck);//IKBD_PressSTKey(cpck,1);	
-		else if(!down && cpck!=0xff)
-			retro_key_up(cpck);//IKBD_PressSTKey(cpck,0);
-
-	}
-
-}
-
 bool retro_load_game(const struct retro_game_info *info)
 {
     	const char *full_path;
-
+/*
     	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
     	{
@@ -153,7 +180,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     	struct retro_keyboard_callback cb = { keyboard_cb };
     	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
-
+*/
     	(void)info;
 
     	full_path = info->path;
