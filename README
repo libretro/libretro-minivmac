@@ -1,19 +1,16 @@
-		Mini Vmac 3.3.2 LIBRETRO DEBUG VERSION
+		minivmac (MnvM_b36) Libretro port
 
 
-What?: First attempt to build Mini Vmac with libretro 
-Why ?: Why not ?
-Who ?: Rtype 
+MnvM_b36 is the build system for Mini vMac,
+a miniature Macintosh emulator.
 
+Further information may be found at
+"https://www.gryphel.com/c/minivmac/".
 
-All credits to Paul C. Pratt : "http://minivmac.sourceforge.net/" .
-
-And of course for the RetroArch/Libretro team : "http://www.libretro.org/"
+-----------------------------------------------------------
 
 It's a quick hack.
 At this time , works the basis but buggy on linux /android.
-
-Remember ,Everything not working well, It's a debug release , so expect to more bug.
 
 Default Control :
 

@@ -70,24 +70,24 @@ else
 endif
 
 SOURCES_C   := \
-				 $(CORE_DIR)/minivmac/minivmac/src/MINEM68K.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/GLOBGLUE.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/M68KITAB.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/VIAEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/VIA2EMDV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/IWMEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/SCCEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/RTCEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/ROMEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/SCSIEMDV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/SONYEMDV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/SCRNEMDV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/VIDEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/ADBEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/ASCEMDEV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/MOUSEMDV.c \
-				 $(CORE_DIR)/minivmac/minivmac/src/PROGMAIN.c \
-				 $(CORE_DIR)/minivmac/MYOSGLUE.c \
+				 $(CORE_DIR)/minivmac/src/MINEM68K.c \
+				 $(CORE_DIR)/minivmac/src/GLOBGLUE.c \
+				 $(CORE_DIR)/minivmac/src/M68KITAB.c \
+				 $(CORE_DIR)/minivmac/src/VIAEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/VIA2EMDV.c \
+				 $(CORE_DIR)/minivmac/src/IWMEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/SCCEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/RTCEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/ROMEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/SCSIEMDV.c \
+				 $(CORE_DIR)/minivmac/src/SONYEMDV.c \
+				 $(CORE_DIR)/minivmac/src/SCRNEMDV.c \
+				 $(CORE_DIR)/minivmac/src/VIDEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/ADBEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/ASCEMDEV.c \
+				 $(CORE_DIR)/minivmac/src/MOUSEMDV.c \
+				 $(CORE_DIR)/minivmac/src/PROGMAIN.c \
+				 $(CORE_DIR)/minivmac/src/OSGLUERETRO.c \
 				 $(CORE_DIR)/libretro/libretro-vmac.c \
 				 $(CORE_DIR)/libretro/vmac-mapper.c \
 				 $(CORE_DIR)/libretro/vkbd.c \
@@ -95,8 +95,8 @@ SOURCES_C   := \
 				 $(CORE_DIR)/libretro/diskutils.c \
 				 $(CORE_DIR)/libretro/fontmsx.c
 
-HINCLUDES := -I$(CORE_DIR)/minivmac/minivmac/src \
-			    -I$(CORE_DIR)/minivmac \
+HINCLUDES := -I$(CORE_DIR)/minivmac/src \
+			    -I$(CORE_DIR)/minivmac/cfg \
 				 -I$(CORE_DIR)/libretro 
 
 OBJECTS := $(SOURCES_C:.c=.o)
@@ -122,7 +122,7 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)  
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(HINCLUDES) -c -o $@ $<
+	$(CC) $(fpic) $(CFLAGS) $(HINCLUDES) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)

@@ -18,8 +18,8 @@ ifeq ($(TARGET_ARCH),mips)
 LOCAL_CFLAGS += -DANDROID_MIPS -D__mips__ -D__MIPSEL__
 endif
 
-EMU = ../minivmac/minivmac/src
-GLUE = ../minivmac
+EMU = ../minivmac/src
+CFG = ../minivmac/cfg
 
 CORE_SRCS = \
 	$(EMU)/MINEM68K.c \
@@ -39,11 +39,11 @@ CORE_SRCS = \
 	$(EMU)/ASCEMDEV.c \
 	$(EMU)/MOUSEMDV.c \
 	$(EMU)/PROGMAIN.c \
-	$(GLUE)/MYOSGLUE.c
+	$(EMU)/OSGLUERETRO.c
 
 BUILD_APP =  $(CORE_SRCS) 
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(EMU)  $(LOCAL_PATH)/$(GLUE)  $(LOCAL_PATH)../libretro
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(EMU)  $(LOCAL_PATH)/$(CFG)  $(LOCAL_PATH)../libretro
 
 OBJECTS := ../libretro/libretro-vmac.c ../libretro/vmac-mapper.c ../libretro/vkbd.c \
 	../libretro/graph.c ../libretro/diskutils.c ../libretro/fontmsx.c  \

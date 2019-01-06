@@ -234,8 +234,11 @@ GLOBALPROC EmulationReserveAlloc(void)
 	MINEM68K_ReserveAlloc();
 #endif
 }
-
+#ifndef __LIBRETRO__
 LOCALFUNC blnr InitEmulation(void)
+#else 
+GLOBALFUNC blnr InitEmulation(void)
+#endif
 {
 #if EmRTC
 	if (RTC_Init())
@@ -382,8 +385,11 @@ LOCALPROC m68k_go_nCycles_1(ui5b n)
 }
 
 LOCALVAR ui5b ExtraSubTicksToDo = 0;
-
+#ifndef __LIBRETRO__ 
 LOCALPROC DoEmulateOneTick(void)
+#else
+GLOBALPROC DoEmulateOneTick(void)
+#endif
 {
 #if EnableAutoSlow
 	{
@@ -445,8 +451,11 @@ LOCALFUNC blnr MoreSubTicksToDo(void)
 
 	return v;
 }
-
+#ifndef __LIBRETRO__
 LOCALPROC DoEmulateExtraTime(void)
+#else
+GLOBALPROC DoEmulateExtraTime(void)
+#endif
 {
 	/*
 		DoEmulateExtraTime is used for
@@ -486,8 +495,11 @@ LOCALVAR ui5b CurEmulatedTime = 0;
 		That is, the number of times
 		"DoEmulateOneTick" has been called.
 	*/
-
+#ifndef __LIBRETRO__
 LOCALPROC RunEmulatedTicksToTrueTime(void)
+#else
+GLOBALPROC RunEmulatedTicksToTrueTime(void)
+#endif
 {
 	/*
 		The general idea is to call DoEmulateOneTick
@@ -538,7 +550,7 @@ LOCALPROC RunEmulatedTicksToTrueTime(void)
 		EmLagTime = n;
 	}
 }
-
+#ifndef __LIBRETRO__
 LOCALPROC MainEventLoop(void)
 {
 	for (; ; ) {
@@ -560,3 +572,4 @@ GLOBALPROC ProgramMain(void)
 		MainEventLoop();
 	}
 }
+#endif
