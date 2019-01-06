@@ -112,7 +112,8 @@ CFLAGS += -DMAC2=1 \
 			 -fomit-frame-pointer \
 			 -fno-strength-reduce \
 			 -fno-builtin \
-			 -finline-functions
+			 -finline-functions \
+			 -D__LIBRETRO__
 
 LDFLAGS  += -lm 
 
