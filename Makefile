@@ -1,6 +1,7 @@
 DEBUG = 0
 
 CORE_DIR := .
+GUI        := $(CORE_DIR)/libretro/nukleargui
 
 ifeq ($(platform),)
 platform = unix
@@ -88,20 +89,24 @@ SOURCES_C   := \
 				 $(CORE_DIR)/minivmac/src/MOUSEMDV.c \
 				 $(CORE_DIR)/minivmac/src/PROGMAIN.c \
 				 $(CORE_DIR)/minivmac/src/OSGLUERETRO.c \
-				 $(CORE_DIR)/libretro/libretro-vmac.c \
-				 $(CORE_DIR)/libretro/vmac-mapper.c \
-				 $(CORE_DIR)/libretro/vkbd.c \
-				 $(CORE_DIR)/libretro/graph.c \
-				 $(CORE_DIR)/libretro/diskutils.c \
-				 $(CORE_DIR)/libretro/fontmsx.c
+				 $(CORE_DIR)/libretro/libretro-core.c \
+				 $(CORE_DIR)/libretro/retrostubs.c \
+				 $(GUI)/retro/SDL_gfxPrimitives.c \
+				 $(GUI)/retro/retro_surface.c  \
+				 $(GUI)/app.c
 
-HINCLUDES := -I$(CORE_DIR)/minivmac/src \
-			    -I$(CORE_DIR)/minivmac/cfg \
-				 -I$(CORE_DIR)/libretro 
+HINCLUDES :=  \
+		-I$(CORE_DIR)/minivmac/src \
+	    	-I$(CORE_DIR)/minivmac/cfg \
+		-I$(CORE_DIR)/libretro \
+		-I$(CORE_DIR)/libretro/include \
+		-I$(GUI) \
+		-I$(GUI)/nuklear \
+		-I$(GUI)/retro
 
 OBJECTS := $(SOURCES_C:.c=.o)
 
-CFLAGS += -DMAC2=1 \
+CFLAGS += -DMAC2=1 -DCORE_NAME=\"MnvM\"\
 			 -std=gnu99 \
 			 -O3 \
 			 -finline-functions \
@@ -113,7 +118,7 @@ CFLAGS += -DMAC2=1 \
 			 -fno-strength-reduce \
 			 -fno-builtin \
 			 -finline-functions \
-			 -D__LIBRETRO__
+			 -D__LIBRETRO__ -DFRONTEND_SUPPORTS_RGB565
 
 LDFLAGS  += -lm 
 

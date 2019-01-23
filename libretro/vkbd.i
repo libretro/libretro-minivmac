@@ -1,11 +1,3 @@
-#ifndef VKBD_DEF_H
-#define VKBD_DEF_H 1
-
-typedef struct {
-	char norml[NLETT];
-	char shift[NLETT];
-	int val;	
-} Mvk;
 
 Mvk MVk[NPLGN*NLIGN*2]={
 
@@ -121,4 +113,4 @@ Mvk MVk[NPLGN*NLIGN*2]={
 
 } ;
 
-#endif
+

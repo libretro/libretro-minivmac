@@ -1080,10 +1080,7 @@ GLOBALPROC UpdateScreen(ui3p* destination, si4b top, si4b left,
 
 
 }
-
-#define TEX_WIDTH 640
-#define TEX_HEIGHT 480
-unsigned short int bmp[TEX_WIDTH * TEX_HEIGHT];
+#include "libretro-core.h"
 
 void ScreenUpdate () {
 	si4b top, left, bottom, right;
@@ -1098,7 +1095,11 @@ void ScreenUpdate () {
 	int changesSize = changesWidth * changesHeight;
 	int i,x,y;
 
+#ifdef FRONTEND_SUPPORTS_RGB565
 	unsigned short int* px = (unsigned short int *)&bmp[0];
+#else
+	unsigned int* px = (unsigned int *)&bmp[0];
+#endif 
 
         UpdateScreen((anyp*)px, top, left, bottom, right);	
 	ScreenClearChanges();
