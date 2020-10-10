@@ -4,10 +4,15 @@
 extern retro_input_poll_t input_poll_cb;
 extern retro_input_state_t input_state_cb;
 
-extern void save_bkg();
-extern void Screen_SetFullUpdate(int scr);
+/* Forward declarations */
+void save_bkg(void);
+void Screen_SetFullUpdate(int scr);
+void retro_key_up(int key);
+void retro_key_down(int key);
+void retro_mouse(int dx, int dy);
+void retro_mouse_but(int down);
 
-//EMU FLAGS
+/* EMU FLAGS */
 int SHOWKEY=-1;
 int SHIFTON=-1;
 int KBMOD=-1;
@@ -37,10 +42,10 @@ void emu_reset()
 
 void Keymap_KeyUp(int symkey)
 {
-	if (symkey == RETROK_NUMLOCK)
-		num_locked = false;
-	else 
-		retro_key_up(symkey);		
+   if (symkey == RETROK_NUMLOCK)
+      num_locked = false;
+   else 
+      retro_key_up(symkey);		
 }
 
 void Keymap_KeyDown(int symkey)
@@ -61,7 +66,7 @@ void Keymap_KeyDown(int symkey)
          //machine_trigger_reset(MACHINE_RESET_MODE_SOFT);
          break;
       default:
-	retro_key_down(symkey);
+         retro_key_down(symkey);
          break;
    }
 }
@@ -73,7 +78,7 @@ void app_vkb_handle(void)
 
    if(oldi!=-1)
    {  
-	retro_key_up(oldi);    
+      retro_key_up(oldi);    
       oldi=-1;
    }
 
@@ -158,7 +163,7 @@ void app_vkb_handle(void)
       else
       {
          oldi=i;
-	 retro_key_down(i);
+         retro_key_down(i);
       }
 
    }
@@ -166,12 +171,13 @@ void app_vkb_handle(void)
 
 }
 
-// Core input Key(not GUI) 
+/* Core input Key (not GUI)  */
 void Core_Processkey(void)
 {
    int i;
-   
-   if (minivmac_kbdtype==0)return;
+
+   if (minivmac_kbdtype==0)
+      return;
 
    for(i=0;i<320;i++)
       Core_Key_Sate[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;

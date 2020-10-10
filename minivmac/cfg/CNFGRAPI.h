@@ -12,7 +12,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/times.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -22,7 +21,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
-#include <dlfcn.h>
 
 #define CanGetAppPath 1
 #define HaveAppPathLink 1

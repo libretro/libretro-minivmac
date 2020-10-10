@@ -1,8 +1,24 @@
+#include <ctype.h>
+
+#ifdef __CELLOS_LV2__
+#include <sys/sys_time.h>
+#include <sys/timer.h>
+#define usleep  sys_timer_usleep
+#else
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
+#endif
+
+#ifdef WIIU
+#include <features_cpu.h>
+#endif
+
 #include "libretro.h"
 #include "libretro-core.h"
 #include "MACkeymap.h"
+#include "vkbd.i"
 
-//CORE VAR
 #ifdef _WIN32
 char slash = '\\';
 #else
@@ -18,41 +34,29 @@ char DISKB_NAME[512]="\0";
 char TAPE_NAME[512]="\0";
 char RETRO_ROM[512];
 
-//TIME
-#ifdef __CELLOS_LV2__
-#include "sys/sys_time.h"
-#include "sys/timer.h"
-#define usleep  sys_timer_usleep
-#else
-#include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
-#endif
 
 int cpuloop=1;
 
 #ifdef FRONTEND_SUPPORTS_RGB565
-	uint16_t *Retro_Screen;
-	uint16_t bmp[WINDOW_SIZE];
-	uint16_t save_Screen[WINDOW_SIZE];
+uint16_t *Retro_Screen;
+uint16_t bmp[WINDOW_SIZE];
+uint16_t save_Screen[WINDOW_SIZE];
 #else
-	unsigned int *Retro_Screen;
-	unsigned int bmp[WINDOW_SIZE];
-	unsigned int save_Screen[WINDOW_SIZE];
+unsigned int *Retro_Screen;
+unsigned int bmp[WINDOW_SIZE];
+unsigned int save_Screen[WINDOW_SIZE];
 #endif 
 
 int minivmac_statusbar=0;
 
-//SOUND
 short signed int SNDBUF[1024*2];
 
-//FIXME: handle 50/60
+/* FIXME: handle 50/60 */
 int snd_sampler = 22255 / 60;
 
-//PATH
 char RPATH[512];
 
-int pauseg=0; //emu status run/pause/end
+int pauseg=0;
 int want_quit=0;
 
 int minivmac_kbdtype=0;
@@ -60,9 +64,15 @@ int minivmac_kbdtype=0;
 extern int MOUSE_EMULATED;
 extern int SHOWKEY;
 
-extern int app_init(void);
-extern int app_free(void);
-extern int app_render(int poll);
+/* Forward declarations */
+int app_init(void);
+int app_free(void);
+int app_render(int poll);
+
+void Emu_init(void);
+void Emu_uninit(void);
+void minivmac_main_exit(void);
+void emu_reset(void);
 
 int CROP_WIDTH;
 int CROP_HEIGHT;
@@ -71,16 +81,9 @@ int VIRTUAL_WIDTH;
 int	retrow=640;
 int	retroh=480;
 
-#include "vkbd.i"
-
 unsigned minivmac_devices[ 2 ];
 
 extern int RETROSTATUS;
-
-extern void Emu_init(void);
-extern void Emu_uninit(void);
-extern void minivmac_main_exit(void);
-extern void emu_reset(void);
 
 const char *retro_save_directory;
 const char *retro_system_directory;
@@ -108,11 +111,10 @@ static char CMDFILE[512];
 
 int loadcmdfile(char *argv)
 {
-   int res=0;
-
+   int res  = 0;
    FILE *fp = fopen(argv,"r");
 
-   if( fp != NULL )
+   if (fp)
    {
       if ( fgets (CMDFILE , 512 , fp) != NULL )
          res=1;	
@@ -131,14 +133,10 @@ int HandleExtension(char *path,char *ext)
          path[len-3] == ext[0] &&
          path[len-2] == ext[1] &&
          path[len-1] == ext[2])
-   {
       return 1;
-   }
 
    return 0;
 }
-
-#include <ctype.h>
 
 //Args for experimental_cmdline
 static char ARGUV[64][1024];
@@ -276,10 +274,6 @@ void parse_cmdline(const char *argv)
       }	
    }
 }
-
-#ifdef WIIU
-#include <features_cpu.h>
-#endif
 
 long GetTicks(void)
 { // in MSec

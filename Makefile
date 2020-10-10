@@ -23,6 +23,10 @@ ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -fPIC
+else ifeq ($(platform), osx)
+   TARGET := $(TARGET_NAME)_libretro.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
 
 # Classic Platforms ####################
 # Platform affix = classic_<ISA>_<µARCH>
@@ -53,13 +57,8 @@ else ifeq ($(platform), classic_armv7_a7)
 	  endif
 	endif
 #######################################
-
-else ifeq ($(platform), osx)
-   TARGET := $(TARGET_NAME)_libretro.dylib
-   fpic := -fPIC
-   SHARED := -dynamiclib
 else
-   CC = gcc
+   CC ?= gcc
    TARGET := $(TARGET_NAME)_libretro.dll
    SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 endif
@@ -70,39 +69,7 @@ else
    CFLAGS += -O3
 endif
 
-SOURCES_C   := \
-				 $(CORE_DIR)/minivmac/src/MINEM68K.c \
-				 $(CORE_DIR)/minivmac/src/GLOBGLUE.c \
-				 $(CORE_DIR)/minivmac/src/M68KITAB.c \
-				 $(CORE_DIR)/minivmac/src/VIAEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/VIA2EMDV.c \
-				 $(CORE_DIR)/minivmac/src/IWMEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/SCCEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/RTCEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/ROMEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/SCSIEMDV.c \
-				 $(CORE_DIR)/minivmac/src/SONYEMDV.c \
-				 $(CORE_DIR)/minivmac/src/SCRNEMDV.c \
-				 $(CORE_DIR)/minivmac/src/VIDEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/ADBEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/ASCEMDEV.c \
-				 $(CORE_DIR)/minivmac/src/MOUSEMDV.c \
-				 $(CORE_DIR)/minivmac/src/PROGMAIN.c \
-				 $(CORE_DIR)/minivmac/src/OSGLUERETRO.c \
-				 $(CORE_DIR)/libretro/libretro-core.c \
-				 $(CORE_DIR)/libretro/retrostubs.c \
-				 $(GUI)/retro/SDL_gfxPrimitives.c \
-				 $(GUI)/retro/retro_surface.c  \
-				 $(GUI)/app.c
-
-HINCLUDES :=  \
-		-I$(CORE_DIR)/minivmac/src \
-	    	-I$(CORE_DIR)/minivmac/cfg \
-		-I$(CORE_DIR)/libretro \
-		-I$(CORE_DIR)/libretro/include \
-		-I$(GUI) \
-		-I$(GUI)/nuklear \
-		-I$(GUI)/retro
+include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o)
 
@@ -128,7 +95,7 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)  
 
 %.o: %.c
-	$(CC) $(fpic) $(CFLAGS) $(HINCLUDES) -c -o $@ $<
+	$(CC) $(fpic) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
