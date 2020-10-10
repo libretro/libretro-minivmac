@@ -12,15 +12,14 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/keysym.h>
-#include <X11/keysymdef.h>
-#include <X11/Xatom.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 
 #define CanGetAppPath 1
 #define HaveAppPathLink 1
