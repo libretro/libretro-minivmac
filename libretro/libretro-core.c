@@ -19,6 +19,29 @@
 #include "MACkeymap.h"
 #include "vkbd.i"
 
+
+extern int MOUSE_EMULATED;
+extern int SHOWKEY;
+
+/* Forward declarations */
+int app_init(void);
+int app_free(void);
+int app_render(int poll);
+
+void Emu_init(void);
+void Emu_uninit(void);
+void minivmac_main_exit(void);
+void emu_reset(void);
+
+void RunEmulatedTicksToTrueTime(void);
+void ScreenUpdate(void);
+int InitOSGLU(int argc, char **argv);
+void retro_poll_event(int joyon);
+void retro_key_up(int key);
+void retro_key_down(int key);
+void retro_loop(void);
+
+/* Variables */
 #ifdef _WIN32
 char slash = '\\';
 #else
@@ -58,21 +81,7 @@ char RPATH[512];
 
 int pauseg=0;
 int want_quit=0;
-
 int minivmac_kbdtype=0;
-
-extern int MOUSE_EMULATED;
-extern int SHOWKEY;
-
-/* Forward declarations */
-int app_init(void);
-int app_free(void);
-int app_render(int poll);
-
-void Emu_init(void);
-void Emu_uninit(void);
-void minivmac_main_exit(void);
-void emu_reset(void);
 
 int CROP_WIDTH;
 int CROP_HEIGHT;

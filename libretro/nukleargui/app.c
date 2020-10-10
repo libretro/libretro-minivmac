@@ -13,12 +13,17 @@
 #include <libretro.h>
 #include <libretro-core.h>
 
-extern void filebrowser_init();
-extern void filebrowser_free();
+/* Forward declarations */
+extern void filebrowser_init(void);
+extern void filebrowser_free(void);
 
 extern void Screen_SetFullUpdate(int scr);
 extern void vkbd_key(int key,int pressed);
-extern void app_vkb_handle();
+extern void app_vkb_handle(void);
+
+int UnInitOSGLU(void);
+
+/* Variables */
 
 extern char Core_Key_Sate[512];
 extern char Core_old_Key_Sate[512];

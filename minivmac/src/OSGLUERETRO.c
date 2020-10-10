@@ -40,6 +40,15 @@
 extern char RETRO_ROM[512];
 extern char RETRO_DIR[512];
 
+/* Forward declarations */
+void DoEmulateOneTick(void);
+blnr InitEmulation(void);
+void DoEmulateExtraTime(void);
+void retro_sound(void);
+int RunOnEndOfSixtieth(void);
+void RunEmulatedTicksToTrueTime(void);
+void retro_audio_cb(short l, short r);
+
 /* --- some simple utilities --- */
 
 GLOBALPROC MyMoveBytes(anyp srcPtr, anyp destPtr, si5b byteCount)
@@ -1149,32 +1158,28 @@ GLOBALOSGLUPROC DoneWithDrawingForTick(void)
 }
 
 //retro loop
-void retro_loop(){
+void retro_loop(void)
+{
+   if(DSKLOAD==1)
+   {
+      (void) Sony_Insert1(RPATH, falseblnr);
+      DSKLOAD=0;
+   }
 
-if(DSKLOAD==1){
-		(void) Sony_Insert1(RPATH, falseblnr);
-		DSKLOAD=0;
-}
-
-		//CheckForSystemEvents();
-		//CheckForSavedTasks();
-		if (ForceMacOff) {
-			return;
-		}
+   //CheckForSystemEvents();
+   //CheckForSavedTasks();
+   if (ForceMacOff)
+      return;
 
 
-		RunOnEndOfSixtieth();
-		DoEmulateExtraTime();
+   RunOnEndOfSixtieth();
+   DoEmulateExtraTime();
 #if 0
-		if (0/*CurSpeedStopped*/) {
-
-			return;//WaitForTheNextEvent();
-		} else {
-			DoEmulateExtraTime();
-			RunOnEndOfSixtieth();
-		}
+   if (0/*CurSpeedStopped*/)
+      return;//WaitForTheNextEvent();
+   DoEmulateExtraTime();
+   RunOnEndOfSixtieth();
 #endif
-
 }
 
 /* --- time, date, location --- */
@@ -1196,27 +1201,28 @@ LOCALVAR ui5b LastTimeUsec;
 
 LOCALPROC GetCurrentTicks(void)
 {
-	struct timeval t;
+   struct timeval t;
 
-	gettimeofday(&t, NULL);
-	if (! HaveTimeDelta) {
-		time_t Current_Time;
-		struct tm *s;
+   gettimeofday(&t, NULL);
+   if (! HaveTimeDelta)
+   {
+      time_t Current_Time;
+      struct tm *s;
 
-		(void) time(&Current_Time);
-		s = localtime(&Current_Time);
-		TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
-			s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
+      (void) time(&Current_Time);
+      s = localtime(&Current_Time);
+      TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
+            s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
 #if 0 /* how portable is this ? */
-		CurMacDelta = ((ui5b)(s->tm_gmtoff) & 0x00FFFFFF)
-			| ((s->tm_isdst ? 0x80 : 0) << 24);
+      CurMacDelta = ((ui5b)(s->tm_gmtoff) & 0x00FFFFFF)
+         | ((s->tm_isdst ? 0x80 : 0) << 24);
 #endif
-		HaveTimeDelta = trueblnr;
-	}
+      HaveTimeDelta = trueblnr;
+   }
 
-	NewMacDateInSeconds = t.tv_sec + TimeDelta;
-	LastTimeSec = (ui5b)t.tv_sec;
-	LastTimeUsec = (ui5b)t.tv_usec;
+   NewMacDateInSeconds = t.tv_sec + TimeDelta;
+   LastTimeSec = (ui5b)t.tv_sec;
+   LastTimeUsec = (ui5b)t.tv_usec;
 }
 
 #define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
@@ -1226,11 +1232,12 @@ LOCALVAR ui5b NextTimeUsec;
 
 LOCALPROC IncrNextTime(void)
 {
-	NextTimeUsec += MyInvTimeStep;
-	if (NextTimeUsec >= TicksPerSecond) {
-		NextTimeUsec -= TicksPerSecond;
-		NextTimeSec += 1;
-	}
+   NextTimeUsec += MyInvTimeStep;
+   if (NextTimeUsec >= TicksPerSecond)
+   {
+      NextTimeUsec -= TicksPerSecond;
+      NextTimeSec += 1;
+   }
 }
 
 LOCALPROC InitNextTime(void)
@@ -1259,19 +1266,25 @@ LOCALPROC UpdateTrueEmulatedTime(void)
 	GetCurrentTicks();
 
 	TimeDiff = GetTimeDiff();
-	if (TimeDiff >= 0) {
-		if (TimeDiff > 4 * MyInvTimeStep) {
-			/* emulation interrupted, forget it */
-			++TrueEmulatedTime;
-			InitNextTime();
-		} else {
+	if (TimeDiff >= 0)
+   {
+		if (TimeDiff > 4 * MyInvTimeStep)
+      {
+         /* emulation interrupted, forget it */
+         ++TrueEmulatedTime;
+         InitNextTime();
+      }
+      else
+      {
 			do {
 				++TrueEmulatedTime;
 				IncrNextTime();
 				TimeDiff -= TicksPerSecond;
 			} while (TimeDiff >= 0);
 		}
-	} else if (TimeDiff < - 2 * MyInvTimeStep) {
+	}
+   else if (TimeDiff < - 2 * MyInvTimeStep)
+   {
 		/* clock goofed if ever get here, reset */
 		InitNextTime();
 	}
@@ -1279,12 +1292,12 @@ LOCALPROC UpdateTrueEmulatedTime(void)
 
 LOCALFUNC blnr CheckDateTime(void)
 {
-	if (CurMacDateInSeconds != NewMacDateInSeconds) {
-		CurMacDateInSeconds = NewMacDateInSeconds;
-		return trueblnr;
-	} else {
-		return falseblnr;
-	}
+   if (CurMacDateInSeconds != NewMacDateInSeconds)
+   {
+      CurMacDateInSeconds = NewMacDateInSeconds;
+      return trueblnr;
+   }
+   return falseblnr;
 }
 
 LOCALFUNC blnr InitLocationDat(void)
@@ -1338,131 +1351,142 @@ LOCALPROC MySound_Start0(void)
 
 GLOBALFUNC tpSoundSamp MySound_BeginWrite(ui4r n, ui4r *actL)
 {
-	ui4b ToFillLen = kAllBuffLen - (TheWriteOffset - ThePlayOffset);
-	ui4b WriteBuffContig =
-		kOneBuffLen - (TheWriteOffset & kOneBuffMask);
+   ui4b ToFillLen       = kAllBuffLen - (TheWriteOffset - ThePlayOffset);
+   ui4b WriteBuffContig =
+      kOneBuffLen - (TheWriteOffset & kOneBuffMask);
 
-	if (WriteBuffContig < n) {
-		n = WriteBuffContig;
-	}
-	if (ToFillLen < n) {
-		/* overwrite previous buffer */
-		TheWriteOffset -= kOneBuffLen;
-	}
+   if (WriteBuffContig < n)
+      n = WriteBuffContig;
+   if (ToFillLen < n)
+   {
+      /* overwrite previous buffer */
+      TheWriteOffset -= kOneBuffLen;
+   }
 
-	*actL = n;
-	return TheSoundBuffer + (TheWriteOffset & kAllBuffMask);
+   *actL = n;
+   return TheSoundBuffer + (TheWriteOffset & kAllBuffMask);
 }
+
 LOCALVAR blnr wantplaying = falseblnr;
+
 GLOBALPROC MySound_EndWrite(ui4r actL)
 {
-	TheWriteOffset += actL;
+   TheWriteOffset += actL;
 
-	if (0 == (TheWriteOffset & kOneBuffMask)) {
-		/* just finished a block */
+   if (0 == (TheWriteOffset & kOneBuffMask))
+   {
+      /* just finished a block */
 
-		if (wantplaying) {
-			TheFillOffset = TheWriteOffset;
-			retro_sound();			
+      if (wantplaying)
+      {
+         TheFillOffset = TheWriteOffset;
+         retro_sound();			
 
-		} else if (((TheWriteOffset - ThePlayOffset) >> kLnOneBuffLen) < 12) {
-			/* just wait */
-		} else {
-			TheFillOffset = TheWriteOffset;
-			wantplaying = trueblnr;
-			retro_sound();			
-		}
-	}
+      }
+      else if (((TheWriteOffset - ThePlayOffset) >> kLnOneBuffLen) < 12)
+      {
+         /* just wait */
+      }
+      else
+      {
+         TheFillOffset = TheWriteOffset;
+         wantplaying = trueblnr;
+         retro_sound();			
+      }
+   }
 
 }
 
 blnr MySound_EndWrite0(ui4r actL)
 {
-	blnr v;
+   blnr v;
 
-	TheWriteOffset += actL;
+   TheWriteOffset += actL;
 
-	if (0 != (TheWriteOffset & kOneBuffMask)) {
-		v = falseblnr;
-	} else {
-		/* just finished a block */
+   if (0 != (TheWriteOffset & kOneBuffMask))
+      v = falseblnr;
+   else
+   {
+      /* just finished a block */
 
-		TheFillOffset = TheWriteOffset;
+      TheFillOffset = TheWriteOffset;
 
-		v = trueblnr; //retro_sound();	
-	}
+      v = trueblnr; //retro_sound();	
+   }
 
-	return v;
+   return v;
 }
 
 LOCALPROC MySound_SecondNotify0(void)
 {
-	if (MinFilledSoundBuffs > DesiredMinFilledSoundBuffs) {
-		++CurEmulatedTime;
-	} else if (MinFilledSoundBuffs < DesiredMinFilledSoundBuffs) {
-		--CurEmulatedTime;
-	}
-	MinFilledSoundBuffs = kSoundBuffers;
+   if (MinFilledSoundBuffs > DesiredMinFilledSoundBuffs)
+      ++CurEmulatedTime;
+   else if (MinFilledSoundBuffs < DesiredMinFilledSoundBuffs)
+      --CurEmulatedTime;
+   MinFilledSoundBuffs = kSoundBuffers;
 }
 
 #define SOUND_SAMPLERATE 22255 /* = round(7833600 * 2 / 704) */
 
 #endif
 
-void retro_sound(){
-
+void retro_sound(void)
+{
 #if MySoundEnabled
+   ui3p NextPlayPtr;
+   ui4b PlayNowSize = 0;
+   ui4b MaskedFillOffset = ThePlayOffset & kOneBuffMask;
 
-	ui3p NextPlayPtr;
-	ui4b PlayNowSize = 0;
-	ui4b MaskedFillOffset = ThePlayOffset & kOneBuffMask;
+   if (MaskedFillOffset != 0)
+   {
+      /* take care of left overs */
+      PlayNowSize = kOneBuffLen - MaskedFillOffset;
+      NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
+   }
+   else if (0 != ((TheFillOffset - ThePlayOffset) >> kLnOneBuffLen))
+   {
+      PlayNowSize = kOneBuffLen;
+      NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
+   }
 
-	if (MaskedFillOffset != 0) {
-		/* take care of left overs */
-		PlayNowSize = kOneBuffLen - MaskedFillOffset;
-		NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
-	} else if (0 != ((TheFillOffset - ThePlayOffset) >> kLnOneBuffLen)) {
-		PlayNowSize = kOneBuffLen;
-		NextPlayPtr = TheSoundBuffer + (ThePlayOffset & kAllBuffMask);
-	}
+   if (0 != PlayNowSize)
+   {
+      int i;
 
-	if (0 != PlayNowSize) {
-		int i;
+      unsigned char * sptr=NextPlayPtr;
+      signed short rsnd=0;
 
-		unsigned char * sptr=NextPlayPtr;
-		signed short rsnd=0;
+      for(i=0;i<PlayNowSize;i++)
+      {
+         rsnd=(signed short int) ( ((int)(*sptr++))-128)<<8;
 
-		for(i=0;i<PlayNowSize;i++){
-			rsnd=(signed short int) ( ((int)(*sptr++))-128)<<8;
-			
-			if(rsnd!=0)retro_audio_cb(rsnd,rsnd);
-		}
-		
-		ThePlayOffset += PlayNowSize;		
+         if(rsnd!=0)retro_audio_cb(rsnd,rsnd);
+      }
 
-	}
+      ThePlayOffset += PlayNowSize;		
+
+   }
 #endif
-
 }
 
 /* --- basic dialogs --- */
 
 LOCALPROC CheckSavedMacMsg(void)
 {
-	/* called only on quit, if error saved but not yet reported */
+   /* called only on quit, if error saved but not yet reported */
+   if (nullpr != SavedBriefMsg)
+   {
+      char briefMsg0[ClStrMaxLength + 1];
+      char longMsg0[ClStrMaxLength + 1];
 
-	if (nullpr != SavedBriefMsg) {
-		char briefMsg0[ClStrMaxLength + 1];
-		char longMsg0[ClStrMaxLength + 1];
+      NativeStrFromCStr(briefMsg0, SavedBriefMsg);
+      NativeStrFromCStr(longMsg0, SavedLongMsg);
 
-		NativeStrFromCStr(briefMsg0, SavedBriefMsg);
-		NativeStrFromCStr(longMsg0, SavedLongMsg);
+      fprintf(stderr, "%s\n", briefMsg0);
+      fprintf(stderr, "%s\n", longMsg0);
 
-		fprintf(stderr, "%s\n", briefMsg0);
-		fprintf(stderr, "%s\n", longMsg0);
-
-		SavedBriefMsg = nullpr;
-	}
+      SavedBriefMsg = nullpr;
+   }
 }
 
 /* --- clipboard --- */
@@ -1494,11 +1518,11 @@ LOCALFUNC blnr Screen_Init(void)
 	return 1;
 }
 
+enum
+{
+   kMagStateNormal,
 
-enum {
-	kMagStateNormal,
-
-	kNumMagStates
+   kNumMagStates
 };
 
 #define kMagStateAuto kNumMagStates
@@ -1508,9 +1532,10 @@ LOCALVAR ui4b RestoreMouseH;
 LOCALVAR ui4b RestoreMouseV;
 
 #if VarFullScreen && EnableMagnify
-enum {
-	kWinStateWindowed,
-	kNumWinStates
+enum
+{
+   kWinStateWindowed,
+   kNumWinStates
 };
 #endif
 
@@ -1534,73 +1559,73 @@ LOCALPROC CheckForSavedTasks(void)
 
 LOCALFUNC blnr ScanCommandLine(void)
 {
-	char *pa;
-	int i = 1;
+   char *pa;
+   int i = 1;
 
 label_retry:
-	if (i < my_argc) {
-		pa = my_argv[i++];
-		if ('-' == pa[0]) {
-			if ((0 == strcmp(pa, "--display"))
-				|| (0 == strcmp(pa, "-display")))
-			{
-				if (i < my_argc) {
-					display_name = my_argv[i++];
-					goto label_retry;
-				}
-			} else
-			if ((0 == strcmp(pa, "--rom"))
-				|| (0 == strcmp(pa, "-r")))
-			{
-				if (i < my_argc) {
-					rom_path = my_argv[i++];
-					goto label_retry;
-				}
-			} else
-			if (0 == strcmp(pa, "-n"))
-			{
-				if (i < my_argc) {
-					n_arg = my_argv[i++];
-					goto label_retry;
-				}
-			} else
-			if (0 == strcmp(pa, "-d"))
-			{
-				if (i < my_argc) {
-					d_arg = my_argv[i++];
-					goto label_retry;
-				}
-			} else
+   if (i < my_argc) {
+      pa = my_argv[i++];
+      if ('-' == pa[0]) {
+         if ((0 == strcmp(pa, "--display"))
+               || (0 == strcmp(pa, "-display")))
+         {
+            if (i < my_argc) {
+               display_name = my_argv[i++];
+               goto label_retry;
+            }
+         } else
+            if ((0 == strcmp(pa, "--rom"))
+                  || (0 == strcmp(pa, "-r")))
+            {
+               if (i < my_argc) {
+                  rom_path = my_argv[i++];
+                  goto label_retry;
+               }
+            } else
+               if (0 == strcmp(pa, "-n"))
+               {
+                  if (i < my_argc) {
+                     n_arg = my_argv[i++];
+                     goto label_retry;
+                  }
+               } else
+                  if (0 == strcmp(pa, "-d"))
+                  {
+                     if (i < my_argc) {
+                        d_arg = my_argv[i++];
+                        goto label_retry;
+                     }
+                  } else
 #ifndef UsingAlsa
 #define UsingAlsa 0
 #endif
 
 #if UsingAlsa
-			if ((0 == strcmp(pa, "--alsadev"))
-				|| (0 == strcmp(pa, "-alsadev")))
-			{
-				if (i < my_argc) {
-					alsadev_name = my_argv[i++];
-					goto label_retry;
-				}
-			} else
+                     if ((0 == strcmp(pa, "--alsadev"))
+                           || (0 == strcmp(pa, "-alsadev")))
+                     {
+                        if (i < my_argc) {
+                           alsadev_name = my_argv[i++];
+                           goto label_retry;
+                        }
+                     } else
 #endif
 #if 0
-			if (0 == strcmp(pa, "-l")) {
-				SpeedValue = 0;
-				goto label_retry;
-			} else
+                        if (0 == strcmp(pa, "-l")) {
+                           SpeedValue = 0;
+                           goto label_retry;
+                        } else
 #endif
-			{
-				MacMsg(kStrBadArgTitle, kStrBadArgMessage, falseblnr);
-			}
-		} else {
-			(void) Sony_Insert1(pa, falseblnr);
-			goto label_retry;
-		}
-	}
+                        {
+                           MacMsg(kStrBadArgTitle, kStrBadArgMessage, falseblnr);
+                        }
+      } else {
+         (void) Sony_Insert1(pa, falseblnr);
+         goto label_retry;
+      }
+   }
 
-	return trueblnr;
+   return trueblnr;
 }
 
 /* --- main program flow --- */
@@ -1619,182 +1644,180 @@ GLOBALFUNC blnr ExtraTimeNotOver(void)
 
 LOCALPROC RunEmulatedTicksToTrueTime0(void)
 {
-	si3b n = OnTrueTime - CurEmulatedTime;
+   si3b n = OnTrueTime - CurEmulatedTime;
 
-	if (n > 0) {
-		if (CheckDateTime()) {
+   if (n > 0)
+   {
+      if (CheckDateTime())
+      {
 #if MySoundEnabled
-			//MySound_SecondNotify();
+         //MySound_SecondNotify();
 #endif
-		}
+      }
 
-		//if ((! gBackgroundFlag)
+      //if ((! gBackgroundFlag)
 #if UseMotionEvents
-		//	&& (! CaughtMouse)
+      //	&& (! CaughtMouse)
 #endif
-	//		)
-		{
-			//CheckMouseState();
-		}
+      //		)
+      {
+         //CheckMouseState();
+      }
 
-		DoEmulateOneTick();
-		++CurEmulatedTime;
+      DoEmulateOneTick();
+      ++CurEmulatedTime;
 
 #if EnableMouseMotion && MayFullScreen
-		if (HaveMouseMotion) {
-			AutoScrollScreen();
-		}
+      if (HaveMouseMotion) {
+         AutoScrollScreen();
+      }
 #endif
-		//MyDrawChangesAndClear();
+      //MyDrawChangesAndClear();
 
-		if (n > 8) {
-			/* emulation not fast enough */
-			n = 8;
-			CurEmulatedTime = OnTrueTime - n;
-		}
+      if (n > 8) {
+         /* emulation not fast enough */
+         n = 8;
+         CurEmulatedTime = OnTrueTime - n;
+      }
 
-		if (ExtraTimeNotOver() && (--n > 0)) {
-			/* lagging, catch up */
+      if (ExtraTimeNotOver() && (--n > 0)) {
+         /* lagging, catch up */
 
-			EmVideoDisable = trueblnr;
+         EmVideoDisable = trueblnr;
 
-			do {
-				DoEmulateOneTick();
-				++CurEmulatedTime;
-			} while (ExtraTimeNotOver()
-				&& (--n > 0));
+         do {
+            DoEmulateOneTick();
+            ++CurEmulatedTime;
+         } while (ExtraTimeNotOver()
+               && (--n > 0));
 
-			EmVideoDisable = falseblnr;
-		}
+         EmVideoDisable = falseblnr;
+      }
 
-		EmLagTime = n;
-	}
+      EmLagTime = n;
+   }
 }
 
 int  RunOnEndOfSixtieth(void)
 {
-	while (ExtraTimeNotOver()) {
-		struct timespec rqt;
-		struct timespec rmt;
+   while (ExtraTimeNotOver())
+   {
+      struct timespec rqt;
+      struct timespec rmt;
 
-		si5b TimeDiff = GetTimeDiff();
-		if (TimeDiff < 0) {
-			rqt.tv_sec = 0;
-			rqt.tv_nsec = (- TimeDiff) * 1000;
-			(void) nanosleep(&rqt, &rmt);
-		}
-	}
+      si5b TimeDiff = GetTimeDiff();
+      if (TimeDiff < 0)
+      {
+         rqt.tv_sec = 0;
+         rqt.tv_nsec = (- TimeDiff) * 1000;
+         (void) nanosleep(&rqt, &rmt);
+      }
+   }
 
-	OnTrueTime = TrueEmulatedTime;
-	RunEmulatedTicksToTrueTime();
+   OnTrueTime = TrueEmulatedTime;
+   RunEmulatedTicksToTrueTime();
 }
 
 LOCALPROC ReserveAllocAll(void)
 {
 #if dbglog_HAVE
-	dbglog_ReserveAlloc();
+   dbglog_ReserveAlloc();
 #endif
-	ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
+   ReserveAllocOneBlock(&ROM, kROM_Size, 5, falseblnr);
 
-	ReserveAllocOneBlock(&screencomparebuff,
-		vMacScreenNumBytes, 5, trueblnr);
+   ReserveAllocOneBlock(&screencomparebuff,
+         vMacScreenNumBytes, 5, trueblnr);
 #if UseControlKeys
-	ReserveAllocOneBlock(&CntrlDisplayBuff,
-		vMacScreenNumBytes, 5, falseblnr);
+   ReserveAllocOneBlock(&CntrlDisplayBuff,
+         vMacScreenNumBytes, 5, falseblnr);
 #endif
 #if WantScalingBuff
-	ReserveAllocOneBlock(&ScalingBuff,
-		ScalingBuffsz, 5, falseblnr);
+   ReserveAllocOneBlock(&ScalingBuff,
+         ScalingBuffsz, 5, falseblnr);
 #endif
 #if 1//WantScalingTabl
 #define ScalingTablsz 256
-	ReserveAllocOneBlock(&ScalingTabl,
-		ScalingTablsz, 5, falseblnr);
+   ReserveAllocOneBlock(&ScalingTabl,
+         ScalingTablsz, 5, falseblnr);
 #endif
 
 #if MySoundEnabled
-	ReserveAllocOneBlock((ui3p *)&TheSoundBuffer,
-		dbhBufferSize, 5, falseblnr);
+   ReserveAllocOneBlock((ui3p *)&TheSoundBuffer,
+         dbhBufferSize, 5, falseblnr);
 #endif
 
-	EmulationReserveAlloc();
+   EmulationReserveAlloc();
 }
 
 LOCALFUNC blnr AllocMyMemory(void)
 {
-	uimr n;
-	blnr IsOk = falseblnr;
+   uimr n;
+   blnr IsOk = falseblnr;
 
-	ReserveAllocOffset = 0;
-	ReserveAllocBigBlock = nullpr;
-	ReserveAllocAll();
-	n = ReserveAllocOffset;
-	ReserveAllocBigBlock = (ui3p)calloc(1, n);
-	if (NULL == ReserveAllocBigBlock) {
-		MacMsg(kStrOutOfMemTitle, kStrOutOfMemMessage, trueblnr);
-	} else {
-		ReserveAllocOffset = 0;
-		ReserveAllocAll();
-		if (n != ReserveAllocOffset) {
-			/* oops, program error */
-		} else {
-			IsOk = trueblnr;
-		}
-	}
+   ReserveAllocOffset = 0;
+   ReserveAllocBigBlock = nullpr;
+   ReserveAllocAll();
+   n = ReserveAllocOffset;
+   ReserveAllocBigBlock = (ui3p)calloc(1, n);
+   if (NULL == ReserveAllocBigBlock)
+      MacMsg(kStrOutOfMemTitle, kStrOutOfMemMessage, trueblnr);
+   else
+   {
+      ReserveAllocOffset = 0;
+      ReserveAllocAll();
+      if (n != ReserveAllocOffset)
+      { 
+         /* oops, program error */
+      }
+      else
+         IsOk = trueblnr;
+   }
 
-	return IsOk;
+   return IsOk;
 }
 
 LOCALPROC UnallocMyMemory(void)
 {
-	if (nullpr != ReserveAllocBigBlock) {
-		free((char *)ReserveAllocBigBlock);
-	}
+   if (nullpr != ReserveAllocBigBlock)
+      free((char *)ReserveAllocBigBlock);
 }
 
 blnr InitOSGLU(int argc, char **argv)
 {
-	my_argc = argc;
-	my_argv = argv;
+   my_argc = argc;
+   my_argv = argv;
 
-	InitDrives();
-	if (AllocMyMemory())
+   InitDrives();
+   if (AllocMyMemory())
 
 #if dbglog_HAVE
-	if (dbglog_open())
+      if (dbglog_open())
 #endif
-	if (ScanCommandLine())
-
-	if (LoadMacRom())
-
-
-	if (Screen_Init())
-	
-	if (InitEmulation())
-	{
-		return trueblnr;
-	}
-	return falseblnr;
+         if (ScanCommandLine())
+            if (LoadMacRom())
+               if (Screen_Init())
+                  if (InitEmulation())
+                     return trueblnr;
+   return falseblnr;
 }
 
 int  UnInitOSGLU(void)
 {
-	if (MacMsgDisplayed) {
-		MacMsgDisplayOff();
-	}
+   if (MacMsgDisplayed)
+      MacMsgDisplayOff();
 
 #if IncludePbufs
-	UnInitPbufs();
+   UnInitPbufs();
 #endif
-	UnInitDrives();
+   UnInitDrives();
 
 
 #if dbglog_HAVE
-	dbglog_close();
+   dbglog_close();
 #endif
 
-	UnallocMyMemory();
+   UnallocMyMemory();
 
-	CheckSavedMacMsg();
+   CheckSavedMacMsg();
 }
 
