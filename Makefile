@@ -73,7 +73,7 @@ include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o)
 
-CFLAGS += -DMAC2=1 -DCORE_NAME=\"MnvM\"\
+CFLAGS += -DMAC2=1 \
 			 -std=gnu99 \
 			 -O3 \
 			 -finline-functions \

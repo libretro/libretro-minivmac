@@ -547,76 +547,79 @@ static void Process_key()
         	revent.Key_Sate[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
    
 	if(memcmp( revent.Key_Sate,revent.old_Key_Sate , sizeof(revent.Key_Sate) ) )
+   {
 	 	for(i=0;i<320;i++)
+      {
 			if(revent.Key_Sate[i] && revent.Key_Sate[i]!=revent.old_Key_Sate[i]  )
-        	{
-	
-				if(i==RETROK_RSHIFT){
-					revent.LSHIFTON=-revent.LSHIFTON;
-					printf("Modifier shift pressed %d \n",revent.LSHIFTON); 
-					continue;
-				}
-/*
-				if(i==RETROK_F12){
-					//play_tape();
-					continue;
-				}
+         {
 
-				if(i==RETROK_RCTRL){
-					//CTRLON=-CTRLON;
-					printf("Modifier crtl pressed %d \n",CTRLON); 
-					continue;
-				}
-				if(i==RETROK_RSHIFT){
-					//SHITFON=-SHITFON;
-					printf("Modifier shift pressed %d \n",SHIFTON); 
-					continue;
-				}
+            if(i==RETROK_RSHIFT){
+               revent.LSHIFTON=-revent.LSHIFTON;
+               printf("Modifier shift pressed %d \n",revent.LSHIFTON); 
+               continue;
+            }
+            /*
+               if(i==RETROK_F12){
+            //play_tape();
+            continue;
+            }
 
-				if(i==RETROK_LALT){
-					//KBMOD=-KBMOD;
-					printf("Modifier alt pressed %d \n",KBMOD); 
-					continue;
-				}
-//printf("press: %d \n",i);
-*/
-				retro_key(i,1);
-	
-        	}	
-        	else if ( !revent.Key_Sate[i] && revent.Key_Sate[i]!=revent.old_Key_Sate[i]  )
-        	{
-				if(i==RETROK_LSHIFT){
-					revent.LSHIFTON=-revent.LSHIFTON;
-					printf("Modifier shift released %d \n",revent.LSHIFTON); 
-					continue;
-				}
-/*
-				if(i==RETROK_F12){
-      				//kbd_buf_feed("|tape\nrun\"\n^");
-					continue;
-				}
+            if(i==RETROK_RCTRL){
+            //CTRLON=-CTRLON;
+            printf("Modifier crtl pressed %d \n",CTRLON); 
+            continue;
+            }
+            if(i==RETROK_RSHIFT){
+            //SHITFON=-SHITFON;
+            printf("Modifier shift pressed %d \n",SHIFTON); 
+            continue;
+            }
 
-				if(i==RETROK_RCTRL){
-					CTRLON=-CTRLON;
-					printf("Modifier crtl released %d \n",CTRLON); 
-					continue;
-				}
-				if(i==RETROK_RSHIFT){
-					SHIFTON=-SHIFTON;
-					printf("Modifier shift released %d \n",SHIFTON); 
-					continue;
-				}
+            if(i==RETROK_LALT){
+            //KBMOD=-KBMOD;
+            printf("Modifier alt pressed %d \n",KBMOD); 
+            continue;
+            }
+            //printf("press: %d \n",i);
+            */
+            retro_key(i,1);
+         }
+         else if ( !revent.Key_Sate[i] && revent.Key_Sate[i]!=revent.old_Key_Sate[i]  )
+         {
+            if(i==RETROK_LSHIFT){
+               revent.LSHIFTON=-revent.LSHIFTON;
+               printf("Modifier shift released %d \n",revent.LSHIFTON); 
+               continue;
+            }
+            /*
+               if(i==RETROK_F12){
+            //kbd_buf_feed("|tape\nrun\"\n^");
+            continue;
+            }
 
-				if(i==RETROK_LALT){
-					KBMOD=-KBMOD;
-					printf("Modifier alt released %d \n",KBMOD); 
-					continue;
-				}
-//printf("release: %d \n",i);
-*/
-				retro_key(i,0);
-	
-        	}	
+            if(i==RETROK_RCTRL){
+            CTRLON=-CTRLON;
+            printf("Modifier crtl released %d \n",CTRLON); 
+            continue;
+            }
+            if(i==RETROK_RSHIFT){
+            SHIFTON=-SHIFTON;
+            printf("Modifier shift released %d \n",SHIFTON); 
+            continue;
+            }
+
+            if(i==RETROK_LALT){
+            KBMOD=-KBMOD;
+            printf("Modifier alt released %d \n",KBMOD); 
+            continue;
+            }
+            //printf("release: %d \n",i);
+            */
+            retro_key(i,0);
+
+         }	
+      }
+   }
 
 	memcpy(revent.old_Key_Sate,revent.Key_Sate , sizeof(revent.Key_Sate) );
 

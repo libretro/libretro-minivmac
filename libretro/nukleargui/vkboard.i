@@ -14,7 +14,6 @@
 			if (nk_button_text(ctx,SHIFTON==-1?MVk[(y*NPLGN)+x+page].norml:MVk[(y*NPLGN)+x+page].shift , \
 				       SHIFTON==-1?strlen(MVk[(y*NPLGN)+x+page].norml):strlen(MVk[(y*NPLGN)+x+page].shift))) {
 
-				LOGI("(%s) pressed! (%d,%d) %x\n",SHIFTON==-1?MVk[(y*NPLGN)+x+page].norml:MVk[(y*NPLGN)+x+page].shift,x,y,MVk[(y*NPLGN)+x+page].val);
 				vkey_pressed=MVk[(y*NPLGN)+x+page].val;
 			}
 

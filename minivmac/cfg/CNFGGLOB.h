@@ -9,10 +9,6 @@
 */
 
 /* adapt to current compiler/host processor */
-#ifdef __i386__
-#error "source is configured for 64 bit compiler"
-#endif
-
 #define MayInline inline __attribute__((always_inline))
 #define MayNotInline __attribute__((noinline))
 #define SmallGlobals 0

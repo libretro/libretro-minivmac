@@ -19,6 +19,7 @@
 #include "MACkeymap.h"
 #include "vkbd.i"
 
+#define CORE_NAME "Mini vMac"
 
 extern int MOUSE_EMULATED;
 extern int SHOWKEY;
@@ -184,10 +185,7 @@ int pre_main(const char *argv)
    }
 
    if(i==1)
-   {
       parse_cmdline(CMDFILE);      
-      LOGI("Starting game from command line :%s\n",CMDFILE);  
-   }
    else
       parse_cmdline(argv); 
 
@@ -198,7 +196,8 @@ int pre_main(const char *argv)
 
 
    if(Only1Arg)
-   {  Add_Option(CORE_NAME);
+   {
+      Add_Option(CORE_NAME);
       /*
          if (strlen(RPATH) >= strlen("crt"))
          if(!strcasecmp(&RPATH[strlen(RPATH)-strlen("crt")], "crt"))
@@ -207,18 +206,16 @@ int pre_main(const char *argv)
       Add_Option(RPATH/*ARGUV[0]*/);
    }
    else
-   { // Pass all cmdline args
+   {
+      // Pass all cmdline args
       for(i = 0; i < ARGUC; i++)
          Add_Option(ARGUV[i]);
    }
 
    for (i = 0; i < PARAMCOUNT; i++)
-   {
       xargv_cmd[i] = (char*)(XARGV[i]);
-      LOGI("%2d  %s\n",i,XARGV[i]);
-   }
 
-  // skel_main(PARAMCOUNT,( char **)xargv_cmd); 
+   // skel_main(PARAMCOUNT,( char **)xargv_cmd); 
    InitOSGLU(PARAMCOUNT,( char **)xargv_cmd); 
 
    xargv_cmd[PARAMCOUNT - 2] = NULL;

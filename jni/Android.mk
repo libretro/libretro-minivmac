@@ -2,9 +2,12 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-APP_DIR := ../../src
+CORE_DIR := $(LOCAL_PATH)/..
+EMU      := $(CORE_DIR)/minivmac/src
+CFG      := $(CORE_DIR)/minivmac/cfg
 
 LOCAL_MODULE    := retro
+LOCAL_CFLAGS    :=
 
 ifeq ($(TARGET_ARCH),arm)
 LOCAL_CFLAGS += -DANDROID_ARM
@@ -18,42 +21,28 @@ ifeq ($(TARGET_ARCH),mips)
 LOCAL_CFLAGS += -DANDROID_MIPS -D__mips__ -D__MIPSEL__
 endif
 
-EMU = ../minivmac/src
-CFG = ../minivmac/cfg
-
-CORE_SRCS = \
-	$(EMU)/MINEM68K.c \
-	$(EMU)/GLOBGLUE.c \
-	$(EMU)/M68KITAB.c \
-	$(EMU)/VIAEMDEV.c \
-	$(EMU)/VIA2EMDV.c \
-	$(EMU)/IWMEMDEV.c \
-	$(EMU)/SCCEMDEV.c \
-	$(EMU)/RTCEMDEV.c \
-	$(EMU)/ROMEMDEV.c \
-	$(EMU)/SCSIEMDV.c \
-	$(EMU)/SONYEMDV.c \
-	$(EMU)/SCRNEMDV.c \
-	$(EMU)/VIDEMDEV.c \
-	$(EMU)/ADBEMDEV.c \
-	$(EMU)/ASCEMDEV.c \
-	$(EMU)/MOUSEMDV.c \
-	$(EMU)/PROGMAIN.c \
-	$(EMU)/OSGLUERETRO.c
+include $(CORE_DIR)/Makefile.common
 
 BUILD_APP =  $(CORE_SRCS) 
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(EMU)  $(LOCAL_PATH)/$(CFG)  $(LOCAL_PATH)../libretro
+LOCAL_SRC_FILES    := $(SOURCES_CXX) $(SOURCES_C)
 
-OBJECTS := ../libretro/libretro-vmac.c ../libretro/vmac-mapper.c ../libretro/vkbd.c \
-	../libretro/graph.c ../libretro/diskutils.c ../libretro/fontmsx.c  \
-	$(BUILD_APP)
+LOCAL_CFLAGS +=  $(INCFLAGS) \
+					  -DMAC2=1 \
+					  -DAND \
+					  -std=gnu99 \
+					  -O3 \
+					  -finline-functions \
+					  -funroll-loops \
+					  -fsigned-char  \
+					  -Wno-strict-prototypes \
+					  -ffast-math \
+					  -fomit-frame-pointer \
+					  -fno-strength-reduce \
+					  -fno-builtin \
+					  -D__LIBRETRO__ -DFRONTEND_SUPPORTS_RGB565 \
+					  -finline-functions -s \
 
-LOCAL_SRC_FILES    += $(OBJECTS)
-
-LOCAL_CFLAGS +=  -DMAC2=1 -DAND \
-		-std=gnu99  -O3 -finline-functions -funroll-loops  -fsigned-char  \
-		 -Wno-strict-prototypes -ffast-math -fomit-frame-pointer -fno-strength-reduce  -fno-builtin -finline-functions -s
 
 LOCAL_LDLIBS    := -shared -Wl,--version-script=../libretro/link.T 
 

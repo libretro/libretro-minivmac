@@ -395,20 +395,16 @@ GLOBALPROC DoEmulateOneTick(void)
 	{
 		ui5r NewQuietTime = QuietTime + 1;
 
-		if (NewQuietTime > QuietTime) {
-			/* if not overflow */
+      /* if not overflow */
+		if (NewQuietTime > QuietTime)
 			QuietTime = NewQuietTime;
-		}
 	}
-#endif
-#if EnableAutoSlow
 	{
 		ui5r NewQuietSubTicks = QuietSubTicks + kNumSubTicks;
 
-		if (NewQuietSubTicks > QuietSubTicks) {
-			/* if not overflow */
+      /* if not overflow */
+		if (NewQuietSubTicks > QuietSubTicks)
 			QuietSubTicks = NewQuietSubTicks;
-		}
 	}
 #endif
 
@@ -497,9 +493,6 @@ LOCALVAR ui5b CurEmulatedTime = 0;
 	*/
 #ifndef __LIBRETRO__
 LOCALPROC RunEmulatedTicksToTrueTime(void)
-#else
-GLOBALPROC RunEmulatedTicksToTrueTime(void)
-#endif
 {
 	/*
 		The general idea is to call DoEmulateOneTick
@@ -550,7 +543,7 @@ GLOBALPROC RunEmulatedTicksToTrueTime(void)
 		EmLagTime = n;
 	}
 }
-#ifndef __LIBRETRO__
+
 LOCALPROC MainEventLoop(void)
 {
 	for (; ; ) {
@@ -568,8 +561,6 @@ LOCALPROC MainEventLoop(void)
 GLOBALPROC ProgramMain(void)
 {
 	if (InitEmulation())
-	{
 		MainEventLoop();
-	}
 }
 #endif

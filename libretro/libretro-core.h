@@ -20,15 +20,6 @@ extern unsigned minivmac_devices[ 2 ];
 #define TEX_WIDTH 640
 #define TEX_HEIGHT 480
 
-//LOG
-#if  defined(__ANDROID__) || defined(ANDROID)
-#include <android/log.h>
-#define LOG_TAG "RetroArch.vice"
-#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#else
-#define LOGI printf
-#endif
-
 //TYPES
 
 #define UINT16 uint16_t

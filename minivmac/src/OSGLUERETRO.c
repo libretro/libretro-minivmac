@@ -46,7 +46,6 @@ blnr InitEmulation(void);
 void DoEmulateExtraTime(void);
 void retro_sound(void);
 int RunOnEndOfSixtieth(void);
-void RunEmulatedTicksToTrueTime(void);
 void retro_audio_cb(short l, short r);
 
 /* --- some simple utilities --- */
@@ -1182,6 +1181,8 @@ void retro_loop(void)
 #endif
 }
 
+GLOBALOSGLUPROC WaitForNextTick(void) { }
+
 /* --- time, date, location --- */
 
 LOCALVAR ui5b TrueEmulatedTime = 0;
@@ -1642,7 +1643,7 @@ GLOBALFUNC blnr ExtraTimeNotOver(void)
 
 #include "PROGMAIN.h"
 
-LOCALPROC RunEmulatedTicksToTrueTime0(void)
+LOCALPROC RunEmulatedTicksToTrueTime(void)
 {
    si3b n = OnTrueTime - CurEmulatedTime;
 
