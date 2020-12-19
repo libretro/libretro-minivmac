@@ -1,14 +1,8 @@
 #include <ctype.h>
 
-#ifdef __CELLOS_LV2__
-#include <sys/sys_time.h>
-#include <sys/timer.h>
-#define usleep  sys_timer_usleep
-#else
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
-#endif
 
 #ifdef WIIU
 #include <features_cpu.h>
@@ -285,19 +279,7 @@ long GetTicks(void)
 { // in MSec
 #ifndef _ANDROID_
 
-#ifdef __CELLOS_LV2__
-
-   //#warning "GetTick PS3\n"
-
-   unsigned long	ticks_micro;
-   uint64_t secs;
-   uint64_t nsecs;
-
-   sys_time_get_current_time(&secs, &nsecs);
-   ticks_micro =  secs * 1000000UL + (nsecs / 1000);
-
-   return ticks_micro;///1000;
-#elif defined(WIIU)
+#if defined(WIIU)
 return (cpu_features_get_time_usec());///1000;
 #else
    struct timeval tv;
