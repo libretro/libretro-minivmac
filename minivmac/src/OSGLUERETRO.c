@@ -123,49 +123,6 @@ LOCALPROC MyMayFree(char *p)
 	}
 }
 
-/* --- sending debugging info to file --- */
-
-#if dbglog_HAVE
-
-#define dbglog_ToStdErr 0
-
-#if ! dbglog_ToStdErr
-LOCALVAR FILE *dbglog_File = NULL;
-#endif
-
-LOCALFUNC blnr dbglog_open0(void)
-{
-#if dbglog_ToStdErr
-	return trueblnr;
-#else
-	dbglog_File = fopen("dbglog.txt", "w");
-	return (NULL != dbglog_File);
-#endif
-}
-
-LOCALPROC dbglog_write0(char *s, uimr L)
-{
-#if dbglog_ToStdErr
-	(void) fwrite(s, 1, L, stderr);
-#else
-	if (dbglog_File != NULL) {
-		(void) fwrite(s, 1, L, dbglog_File);
-	}
-#endif
-}
-
-LOCALPROC dbglog_close0(void)
-{
-#if ! dbglog_ToStdErr
-	if (dbglog_File != NULL) {
-		fclose(dbglog_File);
-		dbglog_File = NULL;
-	}
-#endif
-}
-
-#endif
-
 /* --- debug settings and utilities --- */
 
 #if ! dbglog_HAVE
