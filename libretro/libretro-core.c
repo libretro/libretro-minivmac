@@ -616,9 +616,10 @@ bool retro_load_game(const struct retro_game_info *info)
       struct retro_keyboard_callback cb = { keyboard_cb };
       environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
       */
-   const char *full_path = info->path;
+   memset(RPATH, 0, sizeof(info->path));
 
-   strcpy(RPATH,full_path);
+   if (info && info->path)
+      strncpy(RPATH, info->path, sizeof(RPATH) - 1);
 
    update_variables();
 
