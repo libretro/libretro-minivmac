@@ -19,6 +19,7 @@
 	MY Operating System GLUE. (Minimal for Libretro system)
 */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
