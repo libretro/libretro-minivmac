@@ -161,7 +161,13 @@ file_browser_init(struct file_browser *browser)
     {
         /* load files and sub-directory list */
         const char *home = getenv("HOME");
-#ifdef _WIN32
+#if defined(PS2) || defined(_3DS) || defined(SWITCH) // TODO: Fix directory
+    	if (!home) home = "/";
+#elif defined(GEKKO)
+    	if (!home) home = "/sd:";
+#elif defined(VITA)
+	if (!home) home = "/ux0:";
+#elif defined(_WIN32)
         if (!home) home = getenv("USERPROFILE");
 #else
         if (!home) home = getpwuid(getuid())->pw_dir;
