@@ -43,6 +43,8 @@ extern char RETRO_DIR[512];
 
 LOCALVAR ui5b TimeDelta;
 LOCALVAR int64_t current_us;
+#define TicksPerSecond 1000000
+#define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
 
 /* Forward declarations */
 void DoEmulateOneTick(void);
@@ -1174,7 +1176,7 @@ void retro_init_time(void)
 //retro loop
 void retro_loop(void)
 {
-	current_us += 1000000 / 60;
+	current_us += MyInvTimeStep;
    if(DSKLOAD==1)
    {
       (void) Sony_Insert1(RPATH, falseblnr);
@@ -1197,9 +1199,6 @@ GLOBALOSGLUPROC WaitForNextTick(void) { }
 LOCALVAR ui5b TrueEmulatedTime = 0;
 LOCALVAR ui5b CurEmulatedTime = 0;
 
-
-#define TicksPerSecond 1000000
-
 LOCALVAR ui5b NewMacDateInSeconds;
 
 LOCALVAR ui5b LastTimeSec;
@@ -1211,8 +1210,6 @@ LOCALPROC GetCurrentTicks(void)
    LastTimeUsec = current_us % 1000000;
    NewMacDateInSeconds = TimeDelta + LastTimeSec;
 }
-
-#define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
 
 LOCALVAR ui5b NextTimeSec;
 LOCALVAR ui5b NextTimeUsec;
@@ -1687,22 +1684,9 @@ LOCALPROC RunEmulatedTicksToTrueTime(void)
 
 int  RunOnEndOfSixtieth(void)
 {
-   while (ExtraTimeNotOver())
-   {
-      struct timespec rqt;
-      struct timespec rmt;
-
-      si5b TimeDiff = GetTimeDiff();
-      if (TimeDiff < 0)
-      {
-         rqt.tv_sec = 0;
-         rqt.tv_nsec = (- TimeDiff) * 1000;
-         (void) nanosleep(&rqt, &rmt);
-      }
-   }
-
-   OnTrueTime = TrueEmulatedTime;
-   RunEmulatedTicksToTrueTime();
+	UpdateTrueEmulatedTime();
+	OnTrueTime = TrueEmulatedTime;
+	RunEmulatedTicksToTrueTime();
 }
 
 LOCALPROC ReserveAllocAll(void)
