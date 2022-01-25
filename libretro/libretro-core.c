@@ -480,7 +480,7 @@ void retro_init(void)
       exit(0);
    }
 
-   struct retro_input_descriptor inputDescriptors[] = {
+   static struct retro_input_descriptor inputDescriptors[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "X" },
