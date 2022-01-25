@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
+#include <retro_dirent.h>
 
 /* ===============================================================
  *
@@ -45,6 +48,7 @@ die(const char *fmt, ...)
     exit(EXIT_FAILURE);
 }
 
+#ifndef __LIBRETRO__
 static char*
 file_load(const char* path, size_t* siz)
 {
@@ -59,6 +63,7 @@ file_load(const char* path, size_t* siz)
     fclose(fd);
     return buf;
 }
+#endif
 
 static char*
 str_duplicate(const char *src)
@@ -88,10 +93,9 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
     size_t n = 0;
     char buffer[MAX_PATH_LEN];
     char **results = NULL;
-    const DIR *none = NULL;
     size_t capacity = 32;
     size_t size;
-    DIR *z;
+    struct RDIR *zh = NULL;
 
     assert(dir);
     assert(count);
@@ -103,24 +107,21 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
 
     size = 0;
 
-    z = opendir(dir);
-    if (z != none) {
+    zh = retro_opendir(dir);
+    if (zh != NULL) {
         int nonempty = 1;
-        struct dirent *data = readdir(z);
-        nonempty = (data != NULL);
+	nonempty = retro_readdir(zh);
         if (!nonempty) return NULL;
 
         do {
-            DIR *y;
             char *p;
-            int is_subdir;
-            if (data->d_name[0] == '.')
+            int is_subdir = 0;
+	    const char *name = NULL;
+	    name = retro_dirent_get_name(zh);
+            if (name[0] == '.')
                 continue;
 
-            strncpy(buffer + n, data->d_name, MAX_PATH_LEN-n);
-            y = opendir(buffer);
-            is_subdir = (y != NULL);
-            if (y != NULL) closedir(y);
+	    is_subdir = retro_dirent_is_dir(zh, NULL);
 
             if ((return_subdirs && is_subdir) || (!is_subdir && !return_subdirs)){
                 if (!size) {
@@ -132,13 +133,12 @@ dir_list(const char *dir, int return_subdirs, size_t *count)
                     assert(results);
                     if (!results) free(old);
                 }
-                p = str_duplicate(data->d_name);
+                p = str_duplicate(name);
                 results[size++] = p;
             }
-        } while ((data = readdir(z)) != NULL);
+        } while (zh != NULL && retro_readdir(zh));
     }
-
-    if (z) closedir(z);
+    retro_closedir(zh);
     *count = size;
     return results;
 }

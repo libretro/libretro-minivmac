@@ -29,6 +29,10 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <retro_inline.h>
+#include <libretro.h>
+#include <streams/file_stream.h>
+#include "libretro-core.h"
 
 #include "CNFGRAPI.h"
 #include "SYSDEPNS.h"
@@ -238,7 +242,7 @@ LOCALVAR const ui3b Native2MacRomanTab[] = {
 #endif
 
 #if IncludePbufs
-LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
 {
 	if (NULL == x) {
 		return mnvm_miscErr;
@@ -250,7 +254,7 @@ LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
 		if (NULL == p) {
 			return mnvm_miscErr;
 		} else {
-			ui3b *p0 = (ui3b *)x;
+			const ui3b *p0 = (const ui3b *)x;
 			ui3b *p1 = (ui3b *)p;
 			int i;
 
@@ -369,10 +373,7 @@ LOCALPROC NativeStrFromCStr(char *r, char *s)
 
 #define NotAfileRef NULL
 
-LOCALVAR FILE *Drives[NumDrives]; /* open disk image files */
-#if IncludeSonyGetName || IncludeSonyNew
-LOCALVAR char *DriveNames[NumDrives];
-#endif
+LOCALVAR RFILE *Drives[NumDrives]; /* open disk image files */
 
 LOCALPROC InitDrives(void)
 {
@@ -384,9 +385,6 @@ LOCALPROC InitDrives(void)
 
 	for (i = 0; i < NumDrives; ++i) {
 		Drives[i] = NotAfileRef;
-#if IncludeSonyGetName || IncludeSonyNew
-		DriveNames[i] = NULL;
-#endif
 	}
 }
 
@@ -395,14 +393,14 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
 	ui5r *Sony_ActCount)
 {
 	tMacErr err = mnvm_miscErr;
-	FILE *refnum = Drives[Drive_No];
+	RFILE *refnum = Drives[Drive_No];
 	ui5r NewSony_Count = 0;
 
-	if (0 == fseek(refnum, Sony_Start, SEEK_SET)) {
+	if (filestream_seek(refnum, Sony_Start, RETRO_VFS_SEEK_POSITION_START) >= 0) {
 		if (IsWrite) {
-			NewSony_Count = fwrite(Buffer, 1, Sony_Count, refnum);
+			NewSony_Count = filestream_write(refnum, Buffer, Sony_Count);
 		} else {
-			NewSony_Count = fread(Buffer, 1, Sony_Count, refnum);
+			NewSony_Count = filestream_read(refnum, Buffer, Sony_Count);
 		}
 
 		if (NewSony_Count == Sony_Count) {
@@ -420,42 +418,34 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
 GLOBALFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count)
 {
 	tMacErr err = mnvm_miscErr;
-	FILE *refnum = Drives[Drive_No];
-	long v;
+	RFILE *refnum = Drives[Drive_No];
+	int64_t sz = filestream_get_size(refnum);
+	if (sz < 0)
+		return mnvm_miscErr;
 
-	if (0 == fseek(refnum, 0, SEEK_END)) {
-		v = ftell(refnum);
-		if (v >= 0) {
-			*Sony_Count = v;
-			err = mnvm_noErr;
-		}
-	}
-
-	return err; /*& figure out what really to return &*/
+	*Sony_Count = sz;
+	return mnvm_noErr;
 }
-
 
 LOCALFUNC tMacErr vSonyEject0(tDrive Drive_No, blnr deleteit)
 {
-	FILE *refnum = Drives[Drive_No];
+	RFILE *refnum = Drives[Drive_No];
+	char *s = deleteit ? strdup(filestream_get_path(refnum)) : NULL;
 
 	DiskEjectedNotify(Drive_No);
 
-	fclose(refnum);
+	filestream_close(refnum);
 	Drives[Drive_No] = NotAfileRef; /* not really needed */
 
-#if IncludeSonyGetName || IncludeSonyNew
-	{
-		char *s = DriveNames[Drive_No];
-		if (NULL != s) {
-			if (deleteit) {
+	if (NULL != s) {
+		if (deleteit) {
+			if (vfs_interface)
+				vfs_interface->remove(s);
+			else
 				remove(s);
-			}
-			free(s);
-			DriveNames[Drive_No] = NULL; /* not really needed */
 		}
+		free(s);
 	}
-#endif
 
 	return mnvm_noErr;
 }
@@ -486,11 +476,11 @@ LOCALPROC UnInitDrives(void)
 #if IncludeSonyGetName
 GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 {
-	char *drivepath = DriveNames[Drive_No];
+	const char *drivepath = filestream_get_path(Drives[Drive_No]);
 	if (NULL == drivepath) {
 		return mnvm_miscErr;
 	} else {
-		char *s = strrchr(drivepath, '/');
+		const char *s = strrchr(drivepath, '/');
 		if (NULL == s) {
 			s = drivepath;
 		} else {
@@ -501,7 +491,7 @@ GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 }
 #endif
 
-LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
+LOCALFUNC blnr Sony_Insert0(RFILE *refnum, blnr locked,
 	char *drivepath)
 {
 	tDrive Drive_No;
@@ -517,24 +507,12 @@ LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
 		{
 			Drives[Drive_No] = refnum;
 			DiskInsertNotify(Drive_No, locked);
-
-#if IncludeSonyGetName || IncludeSonyNew
-			{
-				ui5b L = strlen(drivepath);
-				char *p = malloc(L + 1);
-				if (p != NULL) {
-					(void) memcpy(p, drivepath, L + 1);
-				}
-				DriveNames[Drive_No] = p;
-			}
-#endif
-
 			IsOk = trueblnr;
 		}
 	}
 
 	if (! IsOk) {
-		fclose(refnum);
+		filestream_close(refnum);
 	}
 
 	return IsOk;
@@ -544,10 +522,10 @@ LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
 {
 	blnr locked = falseblnr;
 	/* printf("Sony_Insert1 %s\n", drivepath); */
-	FILE *refnum = fopen(drivepath, "rb+");
+	RFILE *refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == refnum) {
 		locked = trueblnr;
-		refnum = fopen(drivepath, "rb");
+		refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	}
 	if (NULL == refnum) {
 		if (! silentfail) {
@@ -602,7 +580,7 @@ LOCALFUNC blnr LoadInitialImages(void)
 }
 
 #if IncludeSonyNew
-LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
+LOCALFUNC blnr WriteZero(RFILE *refnum, ui5b L)
 {
 #define ZeroBufferSize 2048
 	ui5b i;
@@ -612,7 +590,7 @@ LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
 
 	while (L > 0) {
 		i = (L > ZeroBufferSize) ? ZeroBufferSize : L;
-		if (fwrite(buffer, 1, i, refnum) != i) {
+		if (filestream_write(refnum, buffer, i) != i) {
 			return falseblnr;
 		}
 		L -= i;
@@ -625,7 +603,7 @@ LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
 LOCALPROC MakeNewDisk0(ui5b L, char *drivepath)
 {
 	blnr IsOk = falseblnr;
-	FILE *refnum = fopen(drivepath, "wb+");
+	RFILE *refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == refnum) {
 		MacMsg(kStrOpenFailTitle, kStrOpenFailMessage, falseblnr);
 	} else {
@@ -634,10 +612,13 @@ LOCALPROC MakeNewDisk0(ui5b L, char *drivepath)
 			refnum = NULL;
 		}
 		if (refnum != NULL) {
-			fclose(refnum);
+			filestream_close(refnum);
 		}
 		if (! IsOk) {
-			(void) remove(drivepath);
+			if (vfs_interface)
+				vfs_interface->remove(drivepath);
+			else
+				(void) remove(drivepath);
 		}
 	}
 }
@@ -691,16 +672,16 @@ LOCALVAR char *rom_path = NULL;
 LOCALFUNC tMacErr LoadMacRomFrom(char *path)
 {
 	tMacErr err;
-	FILE *ROM_File;
+	RFILE *ROM_File;
 	int File_Size;
 
-	ROM_File = fopen(path, "rb");
+	ROM_File = filestream_open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == ROM_File) {
 		err = mnvm_fnfErr;
 	} else {
-		File_Size = fread(ROM, 1, kROM_Size, ROM_File);
+		File_Size = filestream_read(ROM_File, ROM, kROM_Size);
 		if (File_Size != kROM_Size) {
-			if (feof(ROM_File)) {
+			if (filestream_eof(ROM_File)) {
 				err = mnvm_eofErr;
 			} else {
 				err = mnvm_miscErr;
@@ -708,7 +689,7 @@ LOCALFUNC tMacErr LoadMacRomFrom(char *path)
 		} else {
 			err = mnvm_noErr;
 		}
-		fclose(ROM_File);
+		filestream_close(ROM_File);
 	}
 
 	return err;
@@ -828,6 +809,8 @@ LOCALFUNC blnr LoadMacRom(void)
 }
 
 #if UseActvCode
+
+#error If you activate this please add vfs_interface support
 
 #define ActvCodeFileName "act_1"
 

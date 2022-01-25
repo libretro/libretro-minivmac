@@ -8,7 +8,9 @@
 #include <features_cpu.h>
 #endif
 
-#include "libretro.h"
+#include <libretro.h>
+#include <streams/file_stream.h>
+#include <retro_dirent.h>
 #include "libretro-core.h"
 #include "MACkeymap.h"
 #include "vkbd.i"
@@ -45,6 +47,7 @@ char slash = '/';
 #endif
 
 bool retro_load_ok = false;
+struct retro_vfs_interface *vfs_interface;
 
 char RETRO_DIR[512];
 
@@ -117,14 +120,21 @@ static char CMDFILE[512];
 int loadcmdfile(char *argv)
 {
    int res  = 0;
-   FILE *fp = fopen(argv,"r");
-
-   if (fp)
-   {
-      if ( fgets (CMDFILE , 512 , fp) != NULL )
-         res=1;	
-      fclose (fp);
+   memset(CMDFILE, 0, sizeof(CMDFILE));
+   RFILE *h = filestream_open(argv, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+   char *p;
+   if (h) {
+	   filestream_read(h, CMDFILE, sizeof(CMDFILE) - 1);
+	   filestream_close(h);
+	   res = 1;
    }
+
+   p = strchr(CMDFILE, '\n');
+   if (p)
+	   *p = '\0';
+   p = strchr(CMDFILE, '\r');
+   if (p)
+	   *p = '\0';
 
    return res;
 }
@@ -354,6 +364,15 @@ void retro_set_environment(retro_environment_t cb)
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+
+   struct retro_vfs_interface_info vfs_interface_info;
+   vfs_interface_info.required_interface_version = 3;
+   vfs_interface_info.iface = NULL;
+   if(cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info)) {
+	   vfs_interface = vfs_interface_info.iface;
+   }
+   dirent_vfs_init(&vfs_interface_info);
+   filestream_vfs_init(&vfs_interface_info);
 }
 
 static void update_variables(void)

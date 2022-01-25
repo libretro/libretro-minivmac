@@ -8,7 +8,6 @@
 //#warning just an SDL wrapper for use SDL surface/maprgba in the core.
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <time.h>
 
 /* The number of elements in a table */

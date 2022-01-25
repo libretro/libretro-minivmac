@@ -105,6 +105,7 @@ extern int VIRTUAL_WIDTH;
 extern int retrow ; 
 extern int retroh ;
 extern int minivmac_statusbar;
+extern struct retro_vfs_interface *vfs_interface;
 
 //FUNCS
 extern void mainloop_retro(void);
