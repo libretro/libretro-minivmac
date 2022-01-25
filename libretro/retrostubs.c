@@ -189,6 +189,17 @@ void Core_Processkey(void)
    memcpy(Core_old_Key_Sate,Core_Key_Sate , sizeof(Core_Key_Sate) );
 }
 
+static int transform_axis(int val)
+{
+	int sign = val >= 0 ? +1 : -1;
+	int absval = val >= 0 ? val : -val;
+	int deadzone_val = 15 * 0x7fff / 100;
+	if (absval < deadzone_val)
+		return 0;
+	return sign * ((absval - deadzone_val) * 5 * 10)
+		/ (0x7fff - deadzone_val);
+}
+
 // Core input (not GUI) 
 int Core_PollEvent(void)
 {
@@ -325,6 +336,8 @@ int Core_PollEvent(void)
          mouse_y += PAS;
       if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
          mouse_y -= PAS;
+      mouse_x += transform_axis(input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X));
+      mouse_y += transform_axis(input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y));
       mouse_l=input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A);
       mouse_r=input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B);
    }
