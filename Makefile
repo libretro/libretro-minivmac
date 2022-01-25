@@ -253,7 +253,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(platform), emscripten)
-	$(LD) $(fpic) $(SHARED) $(LDFLAGS) $(LINKOUT)$@ $(OBJECTS) $(LIBS)
+	$(LD) $(fpic) $(SHARED) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
 else ifeq ($(STATIC_LINKING),1)
 	$(AR) rcs $@ $(OBJECTS)
 else
