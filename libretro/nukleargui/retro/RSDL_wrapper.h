@@ -14,33 +14,6 @@
 /* The number of elements in a table */
 #define RSDL_TABLESIZE(table)	(sizeof(table)/sizeof(table[0]))
 
-typedef unsigned char	Uint8;
-typedef signed char	Sint8;
-typedef unsigned short	Uint16;
-typedef signed short	Sint16;
-typedef signed int	Sint32;
-
-typedef signed char     int8;
-typedef signed short    int16;
-typedef signed int   int32;
-typedef unsigned short  uint16;
-typedef unsigned int  uint32;
-
-/* Figure out how to support 64-bit datatypes */
-#if !defined(__STRICT_ANSI__)
-#if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_C)
-#define RSDL_HAS_64BIT_TYPE	 long
-#elif defined(_MSC_VER) /* VC++ */
-#define RSDL_HAS_64BIT_TYPE	__int64
-#endif
-#endif /* !__STRICT_ANSI__ */
-
-
-#define Uint64 unsigned long long 
-#define Sint64 signed long long 
-
-#undef RSDL_HAS_64BIT_TYPE
-
 /* General keyboard/mouse state definitions */
 enum { RSDL_PRESSED = 0x01, RSDL_RELEASED = 0x00 };
 

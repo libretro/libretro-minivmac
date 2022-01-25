@@ -22,14 +22,27 @@ extern unsigned minivmac_devices[ 2 ];
 
 //TYPES
 
-#define UINT16 uint16_t
-#define UINT32 uint32_t
-#define uint32 uint32_t
-#define uint8 uint8_t
+typedef uint8_t Uint8;
+typedef uint16_t Uint16;
+typedef uint32_t Uint32;
+typedef uint64_t Uint64;
 
-#define Uint8 uint8_t
-#define Uint16  uint16_t
-#define Uint32 uint32_t
+typedef int8_t Sint8;
+typedef int16_t Sint16;
+typedef int32_t Sint32;
+typedef int64_t Sint64;
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+
+typedef uint8_t UINT8;
+typedef uint16_t UINT16;
+typedef uint32_t UINT32;
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
