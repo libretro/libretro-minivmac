@@ -35,6 +35,7 @@ void retro_poll_event(int joyon);
 void retro_key_up(int key);
 void retro_key_down(int key);
 void retro_loop(void);
+void retro_init_time(void);
 
 /* Variables */
 #ifdef _WIN32
@@ -625,6 +626,8 @@ bool retro_load_game(const struct retro_game_info *info)
       strncpy(RPATH, info->path, sizeof(RPATH) - 1);
 
    update_variables();
+
+   retro_init_time();
 
    app_init();
 

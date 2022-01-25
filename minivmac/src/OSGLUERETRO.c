@@ -36,9 +36,13 @@
 #include "MYOSGLUE.h"
 
 #include "STRCONST.h"
+#include "DATE2SEC.h"
 
 extern char RETRO_ROM[512];
 extern char RETRO_DIR[512];
+
+LOCALVAR ui5b TimeDelta;
+LOCALVAR int64_t current_us;
 
 /* Forward declarations */
 void DoEmulateOneTick(void);
@@ -1156,9 +1160,21 @@ GLOBALOSGLUPROC DoneWithDrawingForTick(void)
 
 }
 
+void retro_init_time(void)
+{
+	time_t Current_Time;
+	struct tm *s;
+
+	(void) time(&Current_Time);
+	s = localtime(&Current_Time);
+	TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
+				    s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year);
+}
+
 //retro loop
 void retro_loop(void)
 {
+	current_us += 1000000 / 60;
    if(DSKLOAD==1)
    {
       (void) Sony_Insert1(RPATH, falseblnr);
@@ -1170,15 +1186,8 @@ void retro_loop(void)
    if (ForceMacOff)
       return;
 
-
    RunOnEndOfSixtieth();
    DoEmulateExtraTime();
-#if 0
-   if (0/*CurSpeedStopped*/)
-      return;//WaitForTheNextEvent();
-   DoEmulateExtraTime();
-   RunOnEndOfSixtieth();
-#endif
 }
 
 GLOBALOSGLUPROC WaitForNextTick(void) { }
@@ -1188,12 +1197,8 @@ GLOBALOSGLUPROC WaitForNextTick(void) { }
 LOCALVAR ui5b TrueEmulatedTime = 0;
 LOCALVAR ui5b CurEmulatedTime = 0;
 
-#include "DATE2SEC.h"
 
 #define TicksPerSecond 1000000
-
-LOCALVAR blnr HaveTimeDelta = falseblnr;
-LOCALVAR ui5b TimeDelta;
 
 LOCALVAR ui5b NewMacDateInSeconds;
 
@@ -1202,28 +1207,9 @@ LOCALVAR ui5b LastTimeUsec;
 
 LOCALPROC GetCurrentTicks(void)
 {
-   struct timeval t;
-
-   gettimeofday(&t, NULL);
-   if (! HaveTimeDelta)
-   {
-      time_t Current_Time;
-      struct tm *s;
-
-      (void) time(&Current_Time);
-      s = localtime(&Current_Time);
-      TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
-            s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
-#if 0 /* how portable is this ? */
-      CurMacDelta = ((ui5b)(s->tm_gmtoff) & 0x00FFFFFF)
-         | ((s->tm_isdst ? 0x80 : 0) << 24);
-#endif
-      HaveTimeDelta = trueblnr;
-   }
-
-   NewMacDateInSeconds = t.tv_sec + TimeDelta;
-   LastTimeSec = (ui5b)t.tv_sec;
-   LastTimeUsec = (ui5b)t.tv_usec;
+   LastTimeSec = current_us / 1000000;
+   LastTimeUsec = current_us % 1000000;
+   NewMacDateInSeconds = TimeDelta + LastTimeSec;
 }
 
 #define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
