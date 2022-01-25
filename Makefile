@@ -251,7 +251,13 @@ LDFLAGS  += -lm
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
+ifeq ($(platform), emscripten)
+	$(LD) $(fpic) $(SHARED) $(LDFLAGS) $(LINKOUT)$@ $(OBJECTS) $(LIBS)
+else ifeq ($(STATIC_LINKING),1)
+	$(AR) rcs $@ $(OBJECTS)
+else
 	$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)  
+endif
 
 %.o: %.c
 	$(CC) $(fpic) $(CFLAGS) $(INCFLAGS) -c -o $@ $<
