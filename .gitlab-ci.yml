@@ -10,6 +10,7 @@
     JNI_PATH: .
     CORENAME: minivmac
     MAKEFILE: Makefile
+    GIT_SUBMODULE_STRATEGY: recursive
 
 # Inclusion templates, required for the build to work
 include:
