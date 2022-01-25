@@ -216,9 +216,9 @@ int Core_PollEvent(void)
 
    // F9 vkbd
    i=0;
-   if (input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_F9) && kbt[i]==0)
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) && kbt[i]==0)
       kbt[i]=1;
-   else if ( kbt[i]==1 && ! input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_F9) )
+   else if ( kbt[i]==1 && ! input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
    {
       kbt[i]=0;
       SHOWKEY=-SHOWKEY;
