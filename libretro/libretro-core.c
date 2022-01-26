@@ -1,8 +1,6 @@
 #include <ctype.h>
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
 
 #ifdef WIIU
 #include <features_cpu.h>
@@ -88,6 +86,8 @@ int VIRTUAL_WIDTH;
 
 int	retrow=640;
 int	retroh=480;
+
+static int64_t ticks_count; // For the interface
 
 unsigned minivmac_devices[ 2 ];
 
@@ -287,25 +287,8 @@ void parse_cmdline(const char *argv)
 }
 
 long GetTicks(void)
-{ // in MSec
-#ifndef _ANDROID_
-
-#if defined(WIIU)
-return (cpu_features_get_time_usec());///1000;
-#else
-   struct timeval tv;
-   gettimeofday (&tv, NULL);
-   return (tv.tv_sec*1000000 + tv.tv_usec);///1000;
-
-#endif
-
-#else
-
-   struct timespec now;
-   clock_gettime(CLOCK_MONOTONIC, &now);
-   return (now.tv_sec*1000000 + now.tv_nsec/1000);///1000;
-#endif
-
+{
+   return ticks_count;
 } 
 
 void save_bkg(void)
@@ -600,6 +583,8 @@ void retro_run(void)
    static int mfirst=1;
    bool updated = false;
 
+   ticks_count += 1000000 / 60;
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
@@ -645,6 +630,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    retro_init_time();
 
+   ticks_count = 0;
    app_init();
 
    memset(SNDBUF,0,1024*2*2);
