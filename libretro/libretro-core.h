@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <stdbool.h>
+#include "boolean.h"
 
 //#define MATRIX(a,b) (((a) << 3) | (b))
 
