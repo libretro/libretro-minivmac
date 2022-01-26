@@ -9,8 +9,15 @@
 */
 
 /* adapt to current compiler/host processor */
+#include <retro_inline.h>
+
+#ifdef _MSC_VER
+#define MayInline INLINE
+#define MayNotInline
+#else
 #define MayInline inline __attribute__((always_inline))
 #define MayNotInline __attribute__((noinline))
+#endif
 #define SmallGlobals 0
 #define cIncludeUnused 0
 #define UnusedParam(p) (void) p

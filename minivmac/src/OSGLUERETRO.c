@@ -896,7 +896,7 @@ LOCALFUNC tMacErr ActvCodeFileSave(ui3p p)
 
 /* --- video out --- */
 
-inline unsigned short RGBA8888_to_RGB565 (unsigned rgb)
+INLINE unsigned short RGBA8888_to_RGB565 (unsigned rgb)
 {	
 	rgb=rgb>>8;
 

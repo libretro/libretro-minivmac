@@ -2,6 +2,7 @@
 #include "RSDL_wrapper.h"
 #include <stdio.h>
 #include <string.h>
+#include <retro_inline.h>
 
 static const char *cross[] = {
   "X                               ",
@@ -79,7 +80,7 @@ unsigned int Retro_MapRGBA(RSDL_PixelFormat *a, int r, int g, int b,int alpha){
 		    | ((alpha >> a->Aloss) << a->Ashift & a->Amask);
 }
 
-static __inline__
+static INLINE
 RSDL_bool RSDL_IntersectRect(const RSDL_Rect *A, const RSDL_Rect *B, RSDL_Rect *intersection)
 {
 	int Amin, Amax, Bmin, Bmax;
