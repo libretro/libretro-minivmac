@@ -5,6 +5,9 @@
 
 	    //misc options
 	    static int showled = nk_false;
+	    static int current_drvtype = 2;
+	    static int old_drvtype = 2;
+	    int i;
 		
 	    if (minivmac_statusbar) { 
 		showled = nk_true;
@@ -12,8 +15,8 @@
 	    else showled = nk_false;
 
 	    //floppy option
-	    static int current_drvtype = 2;
-	    static int old_drvtype = 2;
+	    current_drvtype = 2;
+	    old_drvtype = 2;
 
 	    // button toggle GUI/EMU
             nk_layout_row_dynamic(ctx, DEFHSZ, 3);
@@ -46,8 +49,6 @@
 
 
 	    //floppy option
-
-	    int i;
 
 	    for(i=0;i<2;i++)
 		if(LOADCONTENT==2 && LDRIVE==(i+8));

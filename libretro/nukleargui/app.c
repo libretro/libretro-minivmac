@@ -141,6 +141,7 @@ int app_event(int poll)
 int app_render(int poll)
 {
     static int prevpoll=0,prevstate=0,reset_state=0;
+    int state;
     if(prevpoll!=poll || reset_state){nk_clear(ctx);reset_state=0;}
 
     if(poll==0)
@@ -150,7 +151,7 @@ int app_render(int poll)
 
     app_event(poll);
 
-    int state=gui(&browser,ctx);
+    state=gui(&browser,ctx);
     if(state==1 && prevstate!=1)reset_state=1;
 
     nk_retro_render(nk_rgba(0,0,0,0));

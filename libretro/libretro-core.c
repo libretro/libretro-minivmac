@@ -120,9 +120,9 @@ static char CMDFILE[512];
 int loadcmdfile(char *argv)
 {
    int res  = 0;
-   memset(CMDFILE, 0, sizeof(CMDFILE));
    RFILE *h = filestream_open(argv, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
    char *p;
+   memset(CMDFILE, 0, sizeof(CMDFILE));
    if (h) {
 	   filestream_read(h, CMDFILE, sizeof(CMDFILE) - 1);
 	   filestream_close(h);
@@ -328,8 +328,6 @@ void Screen_SetFullUpdate(int scr)
 
 void retro_set_environment(retro_environment_t cb)
 {
-   environ_cb = cb;
-
    static const struct retro_controller_description p1_controllers[] = {
       { "Minivmac Joystick", RETRO_DEVICE_MINIVMAC_JOYSTICK },
       { "Minivmac Keyboard", RETRO_DEVICE_MINIVMAC_KEYBOARD },
@@ -346,8 +344,6 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, 0 }
    };
 
-   cb( RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports );
-
    struct retro_variable variables[] = {
       {
          "minivmac_Statusbar",
@@ -360,12 +356,15 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, NULL },
    };
 
+   struct retro_vfs_interface_info vfs_interface_info;
    bool no_content = true;
-   cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
 
+   environ_cb = cb;
+
+   cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
+   cb( RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports );
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 
-   struct retro_vfs_interface_info vfs_interface_info;
    vfs_interface_info.required_interface_version = 3;
    vfs_interface_info.iface = NULL;
    if(cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info)) {
@@ -451,58 +450,13 @@ static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_
 void retro_init(void)
 {    	
    const char *system_dir = NULL;
-
-   struct retro_keyboard_callback cb = { keyboard_cb };
-   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
-   {
-      // if defined, use the system directory			
-      retro_system_directory=system_dir;		
-   }		   
-
    const char *content_dir = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY, &content_dir) && content_dir)
-   {
-      // if defined, use the system directory			
-      retro_content_directory=content_dir;		
-   }			
-
    const char *save_dir = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) && save_dir)
-   {
-      // If save directory is defined use it, otherwise use system directory
-      retro_save_directory = *save_dir ? save_dir : retro_system_directory;      
-   }
-   else
-   {
-      // make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend
-      retro_save_directory=retro_system_directory;
-   }
-
-   if(retro_system_directory==NULL)sprintf(RETRO_DIR, "%s",".");
-   else sprintf(RETRO_DIR, "%s", retro_system_directory);
-
-#if defined(__WIN32__) 
-   sprintf(retro_system_data_directory, "%s\\data",RETRO_DIR);
-#else
-   sprintf(retro_system_data_directory, "%s/data",RETRO_DIR);
-#endif
-
 #ifdef FRONTEND_SUPPORTS_RGB565
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 #else
    enum retro_pixel_format fmt =RETRO_PIXEL_FORMAT_XRGB8888;
 #endif
-
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      fprintf(stderr, "PIXEL FORMAT is not supported.\n");
-      exit(0);
-   }
-
    static struct retro_input_descriptor inputDescriptors[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B" },
@@ -524,8 +478,49 @@ void retro_init(void)
       { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Mouse Y" },
       { 0,                   0, 0,                         0, NULL } 
    };
-   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
 
+   struct retro_keyboard_callback cb = { keyboard_cb };
+   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
+   {
+      // if defined, use the system directory			
+      retro_system_directory=system_dir;		
+   }		   
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY, &content_dir) && content_dir)
+   {
+      // if defined, use the system directory			
+      retro_content_directory=content_dir;		
+   }			
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) && save_dir)
+   {
+      // If save directory is defined use it, otherwise use system directory
+      retro_save_directory = *save_dir ? save_dir : retro_system_directory;      
+   }
+   else
+   {
+      // make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend
+      retro_save_directory=retro_system_directory;
+   }
+
+   if(retro_system_directory==NULL)sprintf(RETRO_DIR, "%s",".");
+   else sprintf(RETRO_DIR, "%s", retro_system_directory);
+
+#if defined(__WIN32__) 
+   sprintf(retro_system_data_directory, "%s\\data",RETRO_DIR);
+#else
+   sprintf(retro_system_data_directory, "%s/data",RETRO_DIR);
+#endif
+
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+   {
+      fprintf(stderr, "PIXEL FORMAT is not supported.\n");
+      exit(0);
+   }
+
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
 }
 
 void retro_deinit(void)

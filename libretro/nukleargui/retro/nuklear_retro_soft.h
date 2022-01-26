@@ -630,8 +630,6 @@ nk_retro_handle_event(int *evt,int poll)
 {
    struct nk_context *ctx = &retro.ctx;
 
-   if(poll)input_poll_cb();
-
    static int lmx=0,lmy=0;
    static int mmbL=0,mmbR=0,mmbM=0;
    static int mbt[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -639,10 +637,13 @@ nk_retro_handle_event(int *evt,int poll)
    int mouse_l,mouse_m,mouse_r;
 
    int16_t mouse_x=0,mouse_y=0;
+   int i;
+
+   if(poll)input_poll_cb();
 
    Process_key();
 
-   int i=2;//TOGGLE: real mouse/ joypad emulate mouse 
+   i=2;//TOGGLE: real mouse/ joypad emulate mouse 
    if ( input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i) && mbt[i]==0 )
       mbt[i]=1;
    else if ( mbt[i]==1 && ! input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i) ){

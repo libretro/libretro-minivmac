@@ -167,10 +167,10 @@ void Retro_FreeSurface(RSDL_Surface *surf )
 
 
 RSDL_Surface *Retro_CreateRGBSurface32( int w,int h, int d, int rm,int rg,int rb,int ra)
-{
-   printf("s(%d,%d,%d) (%x,%x,%x,%x)\n",w,h,d,rm,rg,rb,ra);
-
+{  
    RSDL_Surface *bitmp;
+
+   printf("s(%d,%d,%d) (%x,%x,%x,%x)\n",w,h,d,rm,rg,rb,ra);
 
    bitmp = (RSDL_Surface *) calloc(1, sizeof(*bitmp));
    if (bitmp == NULL)
@@ -257,9 +257,9 @@ RSDL_Surface *Retro_CreateRGBSurface32( int w,int h, int d, int rm,int rg,int rb
 
 RSDL_Surface *Retro_CreateRGBSurface16( int w,int h, int d, int rm,int rg,int rb,int ra)
 {
-   printf("s(%d,%d,%d) (%x,%x,%x,%x)\n",w,h,d,rm,rg,rb,ra);
-
    RSDL_Surface *bitmp;
+
+   printf("s(%d,%d,%d) (%x,%x,%x,%x)\n",w,h,d,rm,rg,rb,ra);
 
    bitmp = (RSDL_Surface *) calloc(1, sizeof(*bitmp));
    if (bitmp == NULL)
@@ -369,7 +369,10 @@ void Retro_Draw_string(RSDL_Surface *surface, signed short int x, signed short i
 
 	unsigned *mbuffer=(unsigned*)surface->pixels;
 #endif
-
+	Sint16 left, right, top, bottom;
+	Sint16 x1, y1, x2, y2;
+	int surfw;
+	int surfh;
 
 	#define VIRTUAL_WIDTH surface->w
 
@@ -379,9 +382,6 @@ void Retro_Draw_string(RSDL_Surface *surface, signed short int x, signed short i
 
 	#define charWidthLocal 8
 	#define charHeightLocal 8
-
-	Sint16 left, right, top, bottom;
-	Sint16 x1, y1, x2, y2;
 
 	left = surface->clip_rect.x;
 	x2 = x + charWidthLocal;
@@ -409,8 +409,8 @@ void Retro_Draw_string(RSDL_Surface *surface, signed short int x, signed short i
     	for(strlen = 0; strlen<maxstrlen && string[strlen]; strlen++) {}
 
 
-	int surfw=strlen * 7 * xscale;
-	int surfh=8 * yscale;
+	surfw=strlen * 7 * xscale;
+	surfh=8 * yscale;
 
 #ifdef M16B	
         linesurf =(unsigned char *)malloc(sizeof(unsigned short)*surfw*surfh );
@@ -480,6 +480,12 @@ void Retro_Draw_char(RSDL_Surface *surface, signed short int x, signed short int
 	unsigned *mbuffer=(unsigned*)surface->pixels;
 #endif
 
+	Sint16 left, right, top, bottom;
+	Sint16 x1, y1, x2, y2;
+
+	int surfw;
+	int surfh;
+
 	#define VIRTUAL_WIDTH surface->w
 
 	if ((surface->clip_rect.w==0) || (surface->clip_rect.h==0)) {
@@ -489,9 +495,6 @@ void Retro_Draw_char(RSDL_Surface *surface, signed short int x, signed short int
 
 	#define charWidthLocal2 7*xscale
 	#define charHeightLocal2 8*yscale
-
-	Sint16 left, right, top, bottom;
-	Sint16 x1, y1, x2, y2;
 
 	left = surface->clip_rect.x;
 	x2 = x + charWidthLocal2;
@@ -516,8 +519,8 @@ void Retro_Draw_char(RSDL_Surface *surface, signed short int x, signed short int
 
         strlen = 1;
 
-	int surfw=strlen * 7 * xscale;
-	int surfh=8 * yscale;
+	surfw=strlen * 7 * xscale;
+	surfh=8 * yscale;
 
 #ifdef M16B	
         linesurf =(unsigned char *)malloc(sizeof(unsigned short)*surfw*surfh );

@@ -47,6 +47,7 @@ gui(struct file_browser *browser,struct nk_context *ctx)
     static nk_flags window_flags = 0;
     static int minimizable = nk_false;
     static int title = nk_true;
+    int tmpval;
 
     /* window flags */
     window_flags = 0;
@@ -57,8 +58,6 @@ gui(struct file_browser *browser,struct nk_context *ctx)
     if (no_scrollbar || (pauseg==1 && LOADCONTENT==1) ) window_flags |= NK_WINDOW_NO_SCROLLBAR;
     if (minimizable) window_flags |= NK_WINDOW_MINIMIZABLE;
     if (title) window_flags |= NK_WINDOW_TITLE;
-
-    int tmpval;
 
     if(pauseg==1 && SHOWKEY==1)SHOWKEY=-1;
     if(pauseg==0 && SHOWKEY==1)GUISTATE=GUI_VKBD;
