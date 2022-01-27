@@ -896,7 +896,7 @@ LOCALFUNC tMacErr ActvCodeFileSave(ui3p p)
 
 /* --- video out --- */
 
-inline unsigned short RGBA8888_to_RGB565 (unsigned rgb)
+INLINE unsigned short RGBA8888_to_RGB565 (unsigned rgb)
 {	
 	rgb=rgb>>8;
 
@@ -1038,12 +1038,10 @@ GLOBALPROC UpdateScreen(ui3p* destination, si4b top, si4b left,
 #include "libretro-core.h"
 
 void ScreenUpdate () {
-	si4b top, left, bottom, right;
-
-	top = 0;
-	left = 0;
-	bottom = vMacScreenHeight;
-	right = vMacScreenWidth;
+	si4b top = 0;
+	si4b left = 0;
+	si4b bottom = vMacScreenHeight;
+	si4b right = vMacScreenWidth;
 
 	int changesWidth = vMacScreenWidth;
 	int changesHeight =vMacScreenHeight;

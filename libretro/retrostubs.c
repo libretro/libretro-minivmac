@@ -211,15 +211,16 @@ int Core_PollEvent(void)
    static int jbt[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
    static int vbt[16]={0x1C,0x39,0x01,0x3B,0x01,0x02,0x04,0x08,0x80,0x40,0x15,0x31,0x24,0x1F,0x6E,0x6F};
    static int kbt[4]={0,0,0,0};
+   int mouse_l;
+   int mouse_r;
+   int16_t mouse_x,mouse_y;
+   static int mmbL=0,mmbR=0;
 
    // MXjoy[0]=0;
    if(!retro_load_ok)
       return 1;
    input_poll_cb();
 
-   int mouse_l;
-   int mouse_r;
-   int16_t mouse_x,mouse_y;
    mouse_x=mouse_y=0;
 
    if(SHOWKEY==-1 && pauseg==0)
@@ -350,8 +351,6 @@ int Core_PollEvent(void)
    }
 
    //slowdown=1;
-
-   static int mmbL=0,mmbR=0;
 
    if(mmbL==0 && mouse_l)
    {

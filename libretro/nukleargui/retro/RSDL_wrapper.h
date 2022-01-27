@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <retro_inline.h>
 
 /* The number of elements in a table */
 #define RSDL_TABLESIZE(table)	(sizeof(table)/sizeof(table[0]))
@@ -68,11 +69,11 @@ typedef struct RSDL_Surface {
 } RSDL_Surface;
 
 
-static __inline__ unsigned short RSDL_Swap16(unsigned short x){
+static INLINE unsigned short RSDL_Swap16(unsigned short x){
 	unsigned short result= ((x<<8)|(x>>8)); 
 return result;
 }
-static __inline__ unsigned RSDL_Swap32(unsigned x){
+static INLINE unsigned RSDL_Swap32(unsigned x){
 	unsigned result= ((x<<24)|((x<<8)&0x00FF0000)|((x>>8)&0x0000FF00)|(x>>24));
  return result;
 }

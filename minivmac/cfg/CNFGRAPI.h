@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifndef __LIBRETRO__
 #include <sys/time.h>
+#endif
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
