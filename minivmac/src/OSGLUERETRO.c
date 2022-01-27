@@ -19,6 +19,7 @@
 	MY Operating System GLUE. (Minimal for Libretro system)
 */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -28,6 +29,10 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <retro_inline.h>
+#include <libretro.h>
+#include <streams/file_stream.h>
+#include "libretro-core.h"
 
 #include "CNFGRAPI.h"
 #include "SYSDEPNS.h"
@@ -36,9 +41,15 @@
 #include "MYOSGLUE.h"
 
 #include "STRCONST.h"
+#include "DATE2SEC.h"
 
 extern char RETRO_ROM[512];
 extern char RETRO_DIR[512];
+
+LOCALVAR ui5b TimeDelta;
+LOCALVAR int64_t current_us;
+#define TicksPerSecond 1000000
+#define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
 
 /* Forward declarations */
 void DoEmulateOneTick(void);
@@ -115,49 +126,6 @@ LOCALPROC MyMayFree(char *p)
 		free(p);
 	}
 }
-
-/* --- sending debugging info to file --- */
-
-#if dbglog_HAVE
-
-#define dbglog_ToStdErr 0
-
-#if ! dbglog_ToStdErr
-LOCALVAR FILE *dbglog_File = NULL;
-#endif
-
-LOCALFUNC blnr dbglog_open0(void)
-{
-#if dbglog_ToStdErr
-	return trueblnr;
-#else
-	dbglog_File = fopen("dbglog.txt", "w");
-	return (NULL != dbglog_File);
-#endif
-}
-
-LOCALPROC dbglog_write0(char *s, uimr L)
-{
-#if dbglog_ToStdErr
-	(void) fwrite(s, 1, L, stderr);
-#else
-	if (dbglog_File != NULL) {
-		(void) fwrite(s, 1, L, dbglog_File);
-	}
-#endif
-}
-
-LOCALPROC dbglog_close0(void)
-{
-#if ! dbglog_ToStdErr
-	if (dbglog_File != NULL) {
-		fclose(dbglog_File);
-		dbglog_File = NULL;
-	}
-#endif
-}
-
-#endif
 
 /* --- debug settings and utilities --- */
 
@@ -274,7 +242,7 @@ LOCALVAR const ui3b Native2MacRomanTab[] = {
 #endif
 
 #if IncludePbufs
-LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
+LOCALFUNC tMacErr NativeTextToMacRomanPbuf(const char *x, tPbuf *r)
 {
 	if (NULL == x) {
 		return mnvm_miscErr;
@@ -286,7 +254,7 @@ LOCALFUNC tMacErr NativeTextToMacRomanPbuf(char *x, tPbuf *r)
 		if (NULL == p) {
 			return mnvm_miscErr;
 		} else {
-			ui3b *p0 = (ui3b *)x;
+			const ui3b *p0 = (const ui3b *)x;
 			ui3b *p1 = (ui3b *)p;
 			int i;
 
@@ -405,10 +373,7 @@ LOCALPROC NativeStrFromCStr(char *r, char *s)
 
 #define NotAfileRef NULL
 
-LOCALVAR FILE *Drives[NumDrives]; /* open disk image files */
-#if IncludeSonyGetName || IncludeSonyNew
-LOCALVAR char *DriveNames[NumDrives];
-#endif
+LOCALVAR RFILE *Drives[NumDrives]; /* open disk image files */
 
 LOCALPROC InitDrives(void)
 {
@@ -420,9 +385,6 @@ LOCALPROC InitDrives(void)
 
 	for (i = 0; i < NumDrives; ++i) {
 		Drives[i] = NotAfileRef;
-#if IncludeSonyGetName || IncludeSonyNew
-		DriveNames[i] = NULL;
-#endif
 	}
 }
 
@@ -431,14 +393,14 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
 	ui5r *Sony_ActCount)
 {
 	tMacErr err = mnvm_miscErr;
-	FILE *refnum = Drives[Drive_No];
+	RFILE *refnum = Drives[Drive_No];
 	ui5r NewSony_Count = 0;
 
-	if (0 == fseek(refnum, Sony_Start, SEEK_SET)) {
+	if (filestream_seek(refnum, Sony_Start, RETRO_VFS_SEEK_POSITION_START) >= 0) {
 		if (IsWrite) {
-			NewSony_Count = fwrite(Buffer, 1, Sony_Count, refnum);
+			NewSony_Count = filestream_write(refnum, Buffer, Sony_Count);
 		} else {
-			NewSony_Count = fread(Buffer, 1, Sony_Count, refnum);
+			NewSony_Count = filestream_read(refnum, Buffer, Sony_Count);
 		}
 
 		if (NewSony_Count == Sony_Count) {
@@ -456,42 +418,34 @@ GLOBALFUNC tMacErr vSonyTransfer(blnr IsWrite, ui3p Buffer,
 GLOBALFUNC tMacErr vSonyGetSize(tDrive Drive_No, ui5r *Sony_Count)
 {
 	tMacErr err = mnvm_miscErr;
-	FILE *refnum = Drives[Drive_No];
-	long v;
+	RFILE *refnum = Drives[Drive_No];
+	int64_t sz = filestream_get_size(refnum);
+	if (sz < 0)
+		return mnvm_miscErr;
 
-	if (0 == fseek(refnum, 0, SEEK_END)) {
-		v = ftell(refnum);
-		if (v >= 0) {
-			*Sony_Count = v;
-			err = mnvm_noErr;
-		}
-	}
-
-	return err; /*& figure out what really to return &*/
+	*Sony_Count = sz;
+	return mnvm_noErr;
 }
-
 
 LOCALFUNC tMacErr vSonyEject0(tDrive Drive_No, blnr deleteit)
 {
-	FILE *refnum = Drives[Drive_No];
+	RFILE *refnum = Drives[Drive_No];
+	char *s = deleteit ? strdup(filestream_get_path(refnum)) : NULL;
 
 	DiskEjectedNotify(Drive_No);
 
-	fclose(refnum);
+	filestream_close(refnum);
 	Drives[Drive_No] = NotAfileRef; /* not really needed */
 
-#if IncludeSonyGetName || IncludeSonyNew
-	{
-		char *s = DriveNames[Drive_No];
-		if (NULL != s) {
-			if (deleteit) {
+	if (NULL != s) {
+		if (deleteit) {
+			if (vfs_interface)
+				vfs_interface->remove(s);
+			else
 				remove(s);
-			}
-			free(s);
-			DriveNames[Drive_No] = NULL; /* not really needed */
 		}
+		free(s);
 	}
-#endif
 
 	return mnvm_noErr;
 }
@@ -522,11 +476,11 @@ LOCALPROC UnInitDrives(void)
 #if IncludeSonyGetName
 GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 {
-	char *drivepath = DriveNames[Drive_No];
+	const char *drivepath = filestream_get_path(Drives[Drive_No]);
 	if (NULL == drivepath) {
 		return mnvm_miscErr;
 	} else {
-		char *s = strrchr(drivepath, '/');
+		const char *s = strrchr(drivepath, '/');
 		if (NULL == s) {
 			s = drivepath;
 		} else {
@@ -537,7 +491,7 @@ GLOBALFUNC tMacErr vSonyGetName(tDrive Drive_No, tPbuf *r)
 }
 #endif
 
-LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
+LOCALFUNC blnr Sony_Insert0(RFILE *refnum, blnr locked,
 	char *drivepath)
 {
 	tDrive Drive_No;
@@ -553,24 +507,12 @@ LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
 		{
 			Drives[Drive_No] = refnum;
 			DiskInsertNotify(Drive_No, locked);
-
-#if IncludeSonyGetName || IncludeSonyNew
-			{
-				ui5b L = strlen(drivepath);
-				char *p = malloc(L + 1);
-				if (p != NULL) {
-					(void) memcpy(p, drivepath, L + 1);
-				}
-				DriveNames[Drive_No] = p;
-			}
-#endif
-
 			IsOk = trueblnr;
 		}
 	}
 
 	if (! IsOk) {
-		fclose(refnum);
+		filestream_close(refnum);
 	}
 
 	return IsOk;
@@ -580,10 +522,10 @@ LOCALFUNC blnr Sony_Insert0(FILE *refnum, blnr locked,
 {
 	blnr locked = falseblnr;
 	/* printf("Sony_Insert1 %s\n", drivepath); */
-	FILE *refnum = fopen(drivepath, "rb+");
+	RFILE *refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == refnum) {
 		locked = trueblnr;
-		refnum = fopen(drivepath, "rb");
+		refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	}
 	if (NULL == refnum) {
 		if (! silentfail) {
@@ -638,7 +580,7 @@ LOCALFUNC blnr LoadInitialImages(void)
 }
 
 #if IncludeSonyNew
-LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
+LOCALFUNC blnr WriteZero(RFILE *refnum, ui5b L)
 {
 #define ZeroBufferSize 2048
 	ui5b i;
@@ -648,7 +590,7 @@ LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
 
 	while (L > 0) {
 		i = (L > ZeroBufferSize) ? ZeroBufferSize : L;
-		if (fwrite(buffer, 1, i, refnum) != i) {
+		if (filestream_write(refnum, buffer, i) != i) {
 			return falseblnr;
 		}
 		L -= i;
@@ -661,7 +603,7 @@ LOCALFUNC blnr WriteZero(FILE *refnum, ui5b L)
 LOCALPROC MakeNewDisk0(ui5b L, char *drivepath)
 {
 	blnr IsOk = falseblnr;
-	FILE *refnum = fopen(drivepath, "wb+");
+	RFILE *refnum = filestream_open(drivepath, RETRO_VFS_FILE_ACCESS_READ_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == refnum) {
 		MacMsg(kStrOpenFailTitle, kStrOpenFailMessage, falseblnr);
 	} else {
@@ -670,10 +612,13 @@ LOCALPROC MakeNewDisk0(ui5b L, char *drivepath)
 			refnum = NULL;
 		}
 		if (refnum != NULL) {
-			fclose(refnum);
+			filestream_close(refnum);
 		}
 		if (! IsOk) {
-			(void) remove(drivepath);
+			if (vfs_interface)
+				vfs_interface->remove(drivepath);
+			else
+				(void) remove(drivepath);
 		}
 	}
 }
@@ -727,16 +672,16 @@ LOCALVAR char *rom_path = NULL;
 LOCALFUNC tMacErr LoadMacRomFrom(char *path)
 {
 	tMacErr err;
-	FILE *ROM_File;
+	RFILE *ROM_File;
 	int File_Size;
 
-	ROM_File = fopen(path, "rb");
+	ROM_File = filestream_open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 	if (NULL == ROM_File) {
 		err = mnvm_fnfErr;
 	} else {
-		File_Size = fread(ROM, 1, kROM_Size, ROM_File);
+		File_Size = filestream_read(ROM_File, ROM, kROM_Size);
 		if (File_Size != kROM_Size) {
-			if (feof(ROM_File)) {
+			if (filestream_eof(ROM_File)) {
 				err = mnvm_eofErr;
 			} else {
 				err = mnvm_miscErr;
@@ -744,7 +689,7 @@ LOCALFUNC tMacErr LoadMacRomFrom(char *path)
 		} else {
 			err = mnvm_noErr;
 		}
-		fclose(ROM_File);
+		filestream_close(ROM_File);
 	}
 
 	return err;
@@ -864,6 +809,8 @@ LOCALFUNC blnr LoadMacRom(void)
 }
 
 #if UseActvCode
+
+#error If you activate this please add vfs_interface support
 
 #define ActvCodeFileName "act_1"
 
@@ -1156,9 +1103,21 @@ GLOBALOSGLUPROC DoneWithDrawingForTick(void)
 
 }
 
+void retro_init_time(void)
+{
+	time_t Current_Time;
+	struct tm *s;
+
+	(void) time(&Current_Time);
+	s = localtime(&Current_Time);
+	TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
+				    s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year);
+}
+
 //retro loop
 void retro_loop(void)
 {
+	current_us += MyInvTimeStep;
    if(DSKLOAD==1)
    {
       (void) Sony_Insert1(RPATH, falseblnr);
@@ -1170,15 +1129,8 @@ void retro_loop(void)
    if (ForceMacOff)
       return;
 
-
    RunOnEndOfSixtieth();
    DoEmulateExtraTime();
-#if 0
-   if (0/*CurSpeedStopped*/)
-      return;//WaitForTheNextEvent();
-   DoEmulateExtraTime();
-   RunOnEndOfSixtieth();
-#endif
 }
 
 GLOBALOSGLUPROC WaitForNextTick(void) { }
@@ -1188,13 +1140,6 @@ GLOBALOSGLUPROC WaitForNextTick(void) { }
 LOCALVAR ui5b TrueEmulatedTime = 0;
 LOCALVAR ui5b CurEmulatedTime = 0;
 
-#include "DATE2SEC.h"
-
-#define TicksPerSecond 1000000
-
-LOCALVAR blnr HaveTimeDelta = falseblnr;
-LOCALVAR ui5b TimeDelta;
-
 LOCALVAR ui5b NewMacDateInSeconds;
 
 LOCALVAR ui5b LastTimeSec;
@@ -1202,31 +1147,10 @@ LOCALVAR ui5b LastTimeUsec;
 
 LOCALPROC GetCurrentTicks(void)
 {
-   struct timeval t;
-
-   gettimeofday(&t, NULL);
-   if (! HaveTimeDelta)
-   {
-      time_t Current_Time;
-      struct tm *s;
-
-      (void) time(&Current_Time);
-      s = localtime(&Current_Time);
-      TimeDelta = Date2MacSeconds(s->tm_sec, s->tm_min, s->tm_hour,
-            s->tm_mday, 1 + s->tm_mon, 1900 + s->tm_year) - t.tv_sec;
-#if 0 /* how portable is this ? */
-      CurMacDelta = ((ui5b)(s->tm_gmtoff) & 0x00FFFFFF)
-         | ((s->tm_isdst ? 0x80 : 0) << 24);
-#endif
-      HaveTimeDelta = trueblnr;
-   }
-
-   NewMacDateInSeconds = t.tv_sec + TimeDelta;
-   LastTimeSec = (ui5b)t.tv_sec;
-   LastTimeUsec = (ui5b)t.tv_usec;
+   LastTimeSec = current_us / 1000000;
+   LastTimeUsec = current_us % 1000000;
+   NewMacDateInSeconds = TimeDelta + LastTimeSec;
 }
-
-#define MyInvTimeStep 16626 /* TicksPerSecond / 60.14742 */
 
 LOCALVAR ui5b NextTimeSec;
 LOCALVAR ui5b NextTimeUsec;
@@ -1701,22 +1625,9 @@ LOCALPROC RunEmulatedTicksToTrueTime(void)
 
 int  RunOnEndOfSixtieth(void)
 {
-   while (ExtraTimeNotOver())
-   {
-      struct timespec rqt;
-      struct timespec rmt;
-
-      si5b TimeDiff = GetTimeDiff();
-      if (TimeDiff < 0)
-      {
-         rqt.tv_sec = 0;
-         rqt.tv_nsec = (- TimeDiff) * 1000;
-         (void) nanosleep(&rqt, &rmt);
-      }
-   }
-
-   OnTrueTime = TrueEmulatedTime;
-   RunEmulatedTicksToTrueTime();
+	UpdateTrueEmulatedTime();
+	OnTrueTime = TrueEmulatedTime;
+	RunEmulatedTicksToTrueTime();
 }
 
 LOCALPROC ReserveAllocAll(void)
