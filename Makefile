@@ -216,6 +216,16 @@ else ifeq ($(platform), gcw0)
 	DISABLE_ERROR_LOGGING := 1
 	CFLAGS += -march=mips32 -mtune=mips32r2 -mhard-float
 	LIBS = -lm
+
+# Miyoo
+else ifeq ($(platform), miyoo)
+   TARGET := $(TARGET_NAME)_libretro.so
+   CC = /opt/miyoo/usr/bin/arm-linux-gcc
+   AR = /opt/miyoo/usr/bin/arm-linux-ar
+   fpic := -fPIC
+   SHARED := -shared -Wl,-version-script=$(CORE_DIR)/link.T
+   CFLAGS += -ffast-math -mcpu=arm926ej-s
+
 # Windows MSVC 2010 x64
 else ifeq ($(platform), windows_msvc2010_x64)
 	CC  = cl.exe
