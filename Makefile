@@ -28,6 +28,14 @@ else ifeq ($(platform), osx)
    fpic := -fPIC
    SHARED := -dynamiclib
 
+   ifeq ($(CROSS_COMPILE),1)
+	TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+	CFLAGS   += $(TARGET_RULE)
+	CPPFLAGS += $(TARGET_RULE)
+	CXXFLAGS += $(TARGET_RULE)
+	LDFLAGS  += $(TARGET_RULE)
+   endif
+
 # Classic Platforms ####################
 # Platform affix = classic_<ISA>_<µARCH>
 # Help at https://modmyclassic.com/comp
