@@ -18,8 +18,8 @@ endif
 
 TARGET_NAME := minivmac
 
-ifeq ($(platform), unix)
-   CC = gcc
+ifneq (,$(findstring unix,$(platform)))
+   CC ?= gcc
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -fPIC
