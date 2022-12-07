@@ -600,10 +600,10 @@ void retro_run(void)
 
    if(pauseg==0)
    {
+      //update_input();
+      retro_poll_event(0);
       retro_loop();
 		ScreenUpdate();
-		//update_input();
-retro_poll_event(0);
       retro_blit();
       if(SHOWKEY==1)app_render(0);
    }
