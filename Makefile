@@ -74,26 +74,30 @@ else ifeq ($(platform), tvos-arm64)
 	ifeq ($(IOSSDK),)
 		IOSSDK := $(shell xcodebuild -version -sdk appletvos Path)
 	endif
+	CC = cc -arch arm64 -isysroot $(IOSSDK)
+	LD = cc -arch arm64 -isysroot $(IOSSDK)
 else ifneq (,$(findstring ios,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
 	SHARED := -dynamiclib
 
-ifeq ($(IOSSDK),)
-	IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
-endif
+	ifeq ($(IOSSDK),)
+		IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+	endif
 
-DEFINES := -DIOS
-CC = cc -arch armv7 -isysroot $(IOSSDK)
-LD = cc -arch armv7 -isysroot $(IOSSDK)
+	DEFINES := -DIOS
 
-ifeq ($(platform),ios9)
-	CC	+= -miphoneos-version-min=8.0
-	CXXFLAGS += -miphoneos-version-min=8.0
-else
-	CC	+= -miphoneos-version-min=5.0
-	CXXFLAGS += -miphoneos-version-min=5.0
-endif
+	ifeq ($(platform),ios9)
+		CC = cc -arch armv7 -isysroot $(IOSSDK)
+		LD = cc -arch armv7 -isysroot $(IOSSDK)
+		CC	+= -miphoneos-version-min=8.0
+		CXXFLAGS += -miphoneos-version-min=8.0
+	else
+		CC = cc -arch arm64 -isysroot $(IOSSDK)
+		LD = cc -arch arm64 -isysroot $(IOSSDK)
+		CC	+= -miphoneos-version-min=5.0
+		CXXFLAGS += -miphoneos-version-min=5.0
+	endif
 
 # Nintendo Game Cube
 else ifeq ($(platform), ngc)
