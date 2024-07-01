@@ -143,7 +143,7 @@ else ifeq ($(platform), wiiu)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
 	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
 	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	CFLAGS += -DGEKKO -DWIIU -DHW_RVL -mwup -mcpu=750 -meabi -mhard-float
+	CFLAGS += -DGEKKO -DWIIU -DHW_RVL -D__wiiu__ -DHW_WUP -ffunction-sections -fdata-sections -mcpu=750 -meabi -mhard-float
 	HAVE_RZLIB := 1
 	STATIC_LINKING=1
 #######################################
