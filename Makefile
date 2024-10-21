@@ -76,6 +76,8 @@ else ifeq ($(platform), tvos-arm64)
 	endif
 	CC = cc -arch arm64 -isysroot $(IOSSDK)
 	LD = cc -arch arm64 -isysroot $(IOSSDK)
+	CC	+= -mappletvos-version-min=11.0
+	CXXFLAGS += -mappletvos-version-min=11.0
 else ifneq (,$(findstring ios,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
