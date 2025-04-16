@@ -368,9 +368,7 @@ all: $(TARGET)
 
 
 $(TARGET): $(OBJECTS)
-ifeq ($(platform), emscripten)
-	$(LD) $(fpic) $(SHARED) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
-else ifneq (,$(findstring msvc,$(platform)))
+ifneq (,$(findstring msvc,$(platform)))
 	link.exe -out:$@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 else ifeq ($(STATIC_LINKING),1)
 	$(AR) rcs $@ $(OBJECTS)
